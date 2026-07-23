@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Darkspell – Triple Triad</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700;900&family=Philosopher:wght@400;700&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="app">
+
+<!-- TITLE -->
+<div id="title-screen" class="screen active">
+  <img id="logoMainImg" src="" class="logo-img" alt="Darkspell">
+  <p class="subtitle">El legado del duelista</p>
+  <img id="logoSubImg" src="" style="width:min(320px,90vw);margin-top:-.5rem;margin-bottom:-.5rem;" alt="">
+  <p class="flavor">"El verdadero poder no viene de la magia.<br>Viene de qué estás dispuesto a perder."</p>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:.7rem;width:100%;max-width:280px">
+    <button class="btn title-btn" onclick="newGame()" style="border-color:#e85d04;color:#e85d04;background:rgba(45,10,0,0.85)">🔥 Juego Nuevo</button>
+    <button class="btn title-btn" onclick="showIntro()">⚔ Continuar</button>
+    <button class="btn title-btn" onclick="quickMatch()" style="border-color:#f4a261;color:#f4a261;background:rgba(40,20,0,0.85)">⚡ Partida Rápida</button>
+    <button class="btn title-btn" onclick="renderAchievements()" style="border-color:#ffd166;color:#ffd166;background:rgba(40,32,0,0.85);position:relative">🏆 Logros<span id="ach-badge" style="display:none;position:absolute;top:-7px;right:-7px;background:#e85d04;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:.68rem;line-height:20px;font-family:'Cinzel',serif;box-shadow:0 0 8px rgba(232,93,4,.8)"></span></button>
+    <button class="btn title-btn" onclick="mpOpenLobby()" style="border-color:#4895ef;color:#4895ef;background:rgba(10,20,60,0.85)">🌐 Jugar Online <span style="font-size:.62rem;letter-spacing:.05em;display:block;color:#8ab6ff;text-transform:none;font-family:'Philosopher',serif;font-weight:400">Beta — 1 vs 1 en tiempo real</span></button>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="intro-screen" class="screen">
+  <img id="intro-logo-img" class="intro-logo" src="" alt="Darkspell">
+  <div class="intro-chapter">Prólogo · La Caída del Reino</div>
+  <div class="intro-title">Un mundo donde las cartas<br>son poder</div>
+  <div class="intro-divider"></div>
+  <div class="intro-body">
+    <p>En el reino de <strong style="color:var(--gold)">Aetherion</strong>, la magia no se lanza con hechizos ni se forja en acero. Se juega en tableros de madera oscura, con cartas que capturan la esencia de los seres más poderosos que han existido.</p>
+    <p>Desde los humildes aldeanos que juegan al anochecer hasta los grandes señores que mueven ejércitos con una sola mano, <strong style="color:var(--gold)">los duelos de cartas</strong> son el lenguaje universal del reino. Las cartas se ganan, se capturan, se heredan. Cada duelo cuenta una historia.</p>
+    <p>Se dice que quien logre reunir las cartas completas verá abrirse ante sí la puerta al poder más antiguo del mundo. Pero la colección es vasta, dispersa entre cientos de duelistas a lo largo y ancho de Aetherion.</p>
+  </div>
+  <div class="intro-legend">
+    "Se cuenta que aquel que complete la colección entera podrá invocar a <strong>la Criatura Sin Nombre</strong>, un ser de poder primordial dormido desde antes de que el reino tuviera nombre. La mayoría lo considera un cuento de taberna. Pero hay quienes dedican su vida entera a la búsqueda, carta por carta, duelo por duelo."
+  </div>
+  <div class="intro-divider"></div>
+  <p style="font-size:.78rem;color:var(--td);font-style:normal;margin-bottom:1rem">¿Serás tú quien lo logre?</p>
+  <button class="btn" onclick="showAvatarScreen(true)">⚔ Comenzar la búsqueda</button>
+</div>
+
+<!-- MAP -->
+<div id="map-screen" class="screen">
+  <div class="map-header" style="width:100%">
+    <span class="map-title" id="map-world-title">⚔ Aetherion</span>
+    <div class="map-right">
+      <span class="player-info" style="display:flex;align-items:center;gap:.4rem;">
+      <img id="player-avatar-img" class="player-avatar" src="" alt="" onclick="showAvatarScreen()" style="cursor:pointer" title="Cambiar aspecto">
+      🃏 <span id="colcnt">5</span> &nbsp;⚡ <span id="energycnt">10</span> <span id="energy-timer" style="font-size:.58rem;color:var(--td)"></span>
+    </span>
+      <button class="btn xs" id="w2-back-btn" style="display:none;border-color:#9d4edd;color:#bf5fff" onclick="mapBack()">← Volver</button>
+      <button class="btn xs" onclick="showS('collection-screen')">📚 Colección</button>
+      <button class="btn xs" onclick="showS('title-screen')">🏠 Inicio</button>
+      <span style="font-family:'Cinzel',serif;font-size:.7rem;color:var(--td)" id="mprog">0/12</span>
+    </div>
+  </div>
+  <div id="worldmap-wrap">
+    <div class="map-controls-float">
+      <button class="map-zoom-btn" id="zoomIn" onclick="mapZoom(1)" title="Acercar">🔍+</button>
+      <button class="map-zoom-btn" id="zoomOut" onclick="mapZoom(-1)" title="Alejar" disabled>🔍−</button>
+      <button class="map-zoom-btn" id="zoomReset" onclick="mapZoom(0)" title="Restablecer" disabled>⤢</button>
+    </div>
+    <div id="worldmap-inner">
+      <div id="worldmap" style="width:100%;position:relative;user-select:none;-webkit-user-select:none;"></div>
+    </div>
+  </div>
+  <p class="map-hint">
+    <strong>Seleccioná a tus oponentes</strong> tocando sus íconos en el mapa.<br>
+    Usá la <strong>🔍 lupa</strong>, <strong>pellizcá con dos dedos</strong> o hacé <strong>doble toque</strong> para acercarte; arrastrá para recorrer.
+  </p>
+  <div id="duel-popup" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.6rem;background:linear-gradient(0deg,rgba(7,8,15,.98) 60%,rgba(7,8,15,.0) 100%);">
+    <div id="duel-popup-inner"></div>
+  </div>
+</div>
+
+<!-- COLLECTION -->
+<div id="collection-screen" class="screen">
+  <div class="map-header" style="width:100%">
+    <span class="map-title">📚 Mi Colección</span>
+    <div class="map-right">
+      <span class="player-info" id="colltotal">0 cartas</span>
+      <button class="btn xs" id="sortBtn" onclick="cycleSort()" title="Ordenar" style="min-width:7rem;justify-content:center;">⇅ <span id="sortLabel">Defecto</span></button>
+      <button class="btn xs" onclick="showS('map-screen')">← Mapa</button>
+    </div>
+  </div>
+  <div class="mp-bar">
+    <span class="mp-label">✨ Puntos Mágicos</span>
+    <span class="mp-val" id="mp-display">0 PM</span>
+    <span class="mp-label" style="margin-left:1rem">⚡ Energía</span>
+    <span class="mp-val" id="energy-display" style="color:#f4d35e">10 ⚡</span>
+  </div>
+  <div class="coll-tabs">
+    <div class="coll-tab active" id="tab-coll" onclick="switchCollTab('coll')">Mi colección</div>
+    <div class="coll-tab" id="tab-sell" onclick="switchCollTab('sell')">Vender cartas</div>
+    <div class="coll-tab" id="tab-shop" onclick="switchCollTab('shop')">✨ Tienda arcana</div>
+  </div>
+  <div class="elem-legend" id="elemlegend" style="width:100%;margin-bottom:.3rem"></div>
+  <div id="collgrid" class="collgrid"></div>
+</div>
+
+<!-- AVATAR SELECT -->
+<div id="avatar-screen" class="screen">
+  <div style="font-family:'Cinzel Decorative',serif;font-size:1rem;color:var(--gold);margin-bottom:.3rem">⚔ Darkspell</div>
+  <div style="font-family:'Philosopher',serif;font-size:.8rem;color:var(--td);margin-bottom:1rem">Elige tu aspecto de duelista</div>
+  <div class="avatar-grid" id="avatar-grid"></div>
+  <div style="font-family:'Philosopher',serif;font-size:.7rem;color:rgba(255,255,255,.35);margin-top:.6rem;max-width:260px">
+    Ganá castillos para desbloquear nuevos aspectos
+  </div>
+  <div style="display:flex;gap:.6rem;justify-content:center;margin-top:1rem;">
+    <button class="btn xs" onclick="confirmAvatarSelect()">✓ Elegir este aspecto</button>
+    <button class="btn xs" style="border-color:var(--td);color:var(--td)" id="avatar-skip-btn" onclick="showS('map-screen')">Continuar →</button>
+  </div>
+</div>
+
+<!-- DECK SELECT -->
+<div id="deck-screen" class="screen">
+  <div class="dh"><h2>✦ Elige tu Mazo</h2><p>Seleccioná 5 cartas de tu colección</p></div>
+  <div class="do" id="dkopp"></div>
+  <div class="deck-slots" id="dkslots"></div>
+  <div class="cgrid" id="cgrid"></div>
+  <div class="dact">
+    <button class="btn sm danger" onclick="showS('map-screen')">← Volver</button>
+    <button class="btn sm green" id="btnD" onclick="startDuel()" disabled>⚔ ¡Duelo!</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="topbar">
+    <span class="tlogo">Darkspell</span>
+    <div class="score"><span class="sp" id="sp">5</span><span class="sd">vs</span><span class="se" id="se">5</span></div>
+    <button id="muteBtn" class="mute-btn" onclick="toggleMute()" title="Música">🔊</button>
+    <span id="tbadge" class="tbadge tbp">Tu turno</span>
+  </div>
+  <div id="dbanner"></div>
+  <div class="elem-legend" id="elemlegend2"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:.35rem;width:100%">
+    <div class="hs">
+      <div class="hl hle" id="elabel">Enemigo</div>
+      <div class="hcards" id="ehand"></div>
+    </div>
+    <div class="board-grid" id="board"></div>
+    <div class="hs">
+      <div class="hl hlp">Tu mano</div>
+      <div class="hcards" id="phand"></div>
+    </div>
+  </div>
+  <div id="log"></div>
+  <div id="chat-wrap">
+    <div id="chat-toggle" onclick="chatToggle()">
+      <span>💬 Chat con el rival</span>
+      <span id="chat-unread">0</span>
+    </div>
+    <div id="chat-box">
+      <div id="chat-log"></div>
+      <div id="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Decí algo..." maxlength="80" onkeydown="if(event.key==='Enter')chatSend()">
+        <button id="chat-send" onclick="chatSend()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="resov" class="overlay">
+  <div class="rp">
+    <div id="ri" class="ri"></div>
+    <div id="rt" class="rt"></div>
+    <div id="rs" class="rs"></div>
+    <div id="rsub" class="rsub"></div>
+    <div id="rrew" class="rrew" style="display:none">
+      <div class="rrewt" id="rrewt">🏆 ¡CARTA OBTENIDA!</div>
+      <div id="rrewd"></div>
+    </div>
+    <div class="rbtns" id="rbtns">
+      <button class="btn sm" id="btnRematch" onclick="rematch()">🔄 Revancha</button>
+      <button class="btn sm" id="btnMapa" onclick="goMap()">🗺 Mapa</button>
+      <button class="btn sm green" id="btnContinue" onclick="continueNext()" style="display:none">⚔ Continuar</button>
+      <button class="btn sm" id="btnMpExit" onclick="mpBackToTitle()" style="display:none;border-color:#4895ef;color:#4895ef">🏠 Volver al inicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- CARD ZOOM -->
+<div id="cardZoomOv" class="overlay" onclick="closeCardZoom()">
+  <div class="cc-zoom-pane">
+    <div class="cc-zoom" id="cardZoomFace"></div>
+    <div class="cc-zoom-lore" id="cardZoomLore"></div>
+    <div class="cc-zoom-hint">Tocá para cerrar</div>
+  </div>
+</div>
+
+<!-- CINEMATIC -->
+<div id="cinematic-screen" class="screen">
+  <div class="cine-box">
+    <img id="cineImg" class="cine-img" src="" alt="">
+    <div class="cine-eyebrow">La Caída del Reino</div>
+    <div class="cine-title" id="cineTitle"></div>
+    <div class="cine-text" id="cineText"></div>
+    <button class="btn" onclick="closeCinematic()">Continuar →</button>
+  </div>
+</div>
+
+<div id="tt"><div class="ttn" id="ttn"></div><div class="ttf" id="ttf"></div><div class="tts" id="tts"></div><div class="ttl" id="ttl"></div></div>
+
+<!-- TUTORIAL -->
+<div id="tut-overlay"></div>
+<div id="tut-box" class="tut-box" style="display:none">
+  <div class="tut-bubble">
+    <div class="tut-port">
+      <img id="tut-port-img" src="" alt="">
+      <span class="tut-speaker" id="tut-speaker"></span>
+    </div>
+    <div class="tut-text" id="tut-text"></div>
+    <button class="tut-next" id="tut-next" onclick="tutNext()">Entendido →</button>
+    <button class="tut-skip" id="tut-skip" onclick="tutSkip()">Saltar tutorial ↩</button>
+  </div>
+</div>
+
+<!-- COIN FLIP -->
+<div id="coinov" class="overlay">
+  <div class="coin-pane">
+    <div class="coin-title">🪙 ¿Quién empieza?</div>
+    <div class="coin-stage">
+      <div class="coin" id="coinEl">
+        <div class="coin-face coin-front"><img id="coinLogoImg" src="" alt="Darkspell"></div>
+        <div class="coin-face coin-back">✕</div>
+      </div>
+    </div>
+    <div class="coin-result" id="coinResultText"></div>
+  </div>
+</div>
+</div>
+<!-- CUSTOM CONFIRM MODAL -->
+<div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:linear-gradient(135deg,#1a1030,#0d0820);border:2px solid #e85d04;border-radius:12px;padding:1.5rem 1.2rem;max-width:320px;width:100%;text-align:center;box-shadow:0 0 40px rgba(232,93,4,.4);">
+    <div style="font-size:2rem;margin-bottom:.5rem">🔥</div>
+    <div style="font-family:'Cinzel',serif;font-size:1rem;color:#e85d04;margin-bottom:.5rem;font-weight:700;">¿Juego Nuevo?</div>
+    <div style="font-size:.82rem;color:#c0b8d0;line-height:1.6;margin-bottom:1.2rem;">Esto borrará <strong style="color:#fff">todo tu progreso</strong>: colección de cartas y duelos ganados.<br><br>Esta acción <strong style="color:#e85d04">no se puede deshacer</strong>.</div>
+    <div style="display:flex;gap:.6rem;justify-content:center;">
+      <button class="btn danger" style="flex:1" onclick="confirmNewGame()">🔥 Sí, empezar</button>
+      <button class="btn" style="flex:1" onclick="closeConfirm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+<script src="sprites.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
