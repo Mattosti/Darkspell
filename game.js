@@ -1728,6 +1728,7 @@ function startDuel(){
     indices.forEach((i,j)=>{ ehBase[i]=shuffledPool[j].id; });
   }
   G={board:Array(9).fill(null),cellEl,ph:[...dkSel],eh:ehBase,sel:null,turn:'player',over:false,ps:5,es:5,did:pendDid};
+  document.getElementById('mpLeaveBtn').style.display='none';
   document.getElementById('elabel').textContent=d.emoji+' '+d.name;
   document.getElementById('dbanner').innerHTML=
     '<div class="dbanner"><div class="dbside">'
@@ -2634,11 +2635,17 @@ function mpOpenDeckPicker(){
   const lov=document.getElementById('mp-lobby-ov'); if(lov)lov.remove();
   const p=document.createElement('div');
   p.id='mp-deck-ov';
-  p.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.95);display:flex;flex-direction:column;padding:1rem;overflow:hidden;';
-  p.innerHTML='<div style="font-family:\'Cinzel Decorative\',serif;font-size:.9rem;color:#7fd8ff;text-align:center;margin-bottom:.5rem">🌐 Elegí tus 5 cartas</div>'
+  p.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.95);display:flex;flex-direction:column;align-items:center;padding:1rem;overflow:hidden;';
+  p.innerHTML='<div style="width:100%;max-width:420px;height:100%;display:flex;flex-direction:column;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">'
+    +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="mpLeaveDeckPicker()">← Cancelar</button>'
+    +'<div style="font-family:\'Cinzel Decorative\',serif;font-size:.85rem;color:#7fd8ff;text-align:center;flex:1">🌐 Elegí tus 5 cartas</div>'
+    +'<div style="width:64px"></div>'
+    +'</div>'
     +'<div id="mp-deck-slots" style="display:flex;gap:.4rem;justify-content:center;margin-bottom:.6rem"></div>'
-    +'<div id="mp-deck-grid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;padding:.3rem;"></div>'
-    +'<button class="btn sm" id="mp-deck-go" style="margin-top:.6rem;border-color:#52b788;color:#52b788" disabled></button>';
+    +'<div id="mp-deck-grid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;padding:.3rem;"></div>'
+    +'<button class="btn sm" id="mp-deck-go" style="margin-top:.6rem;border-color:#52b788;color:#52b788" disabled></button>'
+    +'</div>';
   document.body.appendChild(p);
   mpRenderDeckPicker();
 }
@@ -2651,9 +2658,9 @@ function mpRenderDeckPicker(){
   const slots=document.getElementById('mp-deck-slots'); if(!slots)return;
   slots.innerHTML=Array.from({length:5},(_,i)=>{
     const cid=mpSel[i];
-    if(!cid) return '<div style="width:38px;height:52px;border:1.5px dashed rgba(127,216,255,.3);border-radius:6px;"></div>';
+    if(!cid) return '<div style="width:44px;height:59px;border:1.5px dashed rgba(127,216,255,.3);border-radius:6px;"></div>';
     const c=CARDS.find(x=>x.id===cid);
-    return '<div style="width:38px;height:52px;border-radius:6px;overflow:hidden;border:1.5px solid #7fd8ff;"><img src="'+ART[c.art]+'" style="width:100%;height:100%;object-fit:cover"></div>';
+    return '<div class="hc" style="width:44px;border-color:#7fd8ff;">'+cardFace(c)+'</div>';
   }).join('');
   const pow=cid=>{const c=CARDS.find(x=>x.id===cid);return c?c.st*100+c.stats.reduce((a,b)=>a+b,0):0;};
   const grid=document.getElementById('mp-deck-grid');
@@ -2662,8 +2669,9 @@ function mpRenderDeckPicker(){
     const c=CARDS.find(x=>x.id===cid); if(!c)return;
     const sel=mpSel.includes(cid);
     const div=document.createElement('div');
-    div.style.cssText='aspect-ratio:3/4;border-radius:6px;overflow:hidden;border:2px solid '+(sel?'#52b788':'rgba(255,255,255,.15)')+';cursor:pointer;'+(sel?'':'opacity:.75');
-    div.innerHTML='<img src="'+ART[c.art]+'" style="width:100%;height:100%;object-fit:cover">';
+    div.className='hc';
+    div.style.cssText='width:100%;cursor:pointer;border:2px solid '+(sel?'#52b788':'rgba(255,255,255,.15)')+';'+(sel?'':'opacity:.75');
+    div.innerHTML=cardFace(c);
     div.onclick=()=>mpToggleSel(cid);
     grid.appendChild(div);
   });
@@ -2731,6 +2739,7 @@ function mpBeginDuel(){
     +'<div class="dbname" style="color:var(--ec)">Rival</div></div></div>';
   document.getElementById('elemlegend2').innerHTML=legendHTML();
   showS('game-screen');
+  document.getElementById('mpLeaveBtn').style.display='';
   startAmbient('normal');updateMuteBtn();
   clearLog();addLog('⚔ Duelo en línea — ¡Que comience!','ls');
   chatReset();
@@ -2772,20 +2781,55 @@ function mpReceiveMove(ci,cid){
   G.turn='player';renderTurn();
 }
 function mpOnDisconnect(silent){
-  if(!G||G.over)return;
-  G.over=true;
-  if(!silent) showToastMsg('⚠ Tu rival se desconectó.');
-  document.getElementById('ri').textContent='🔌';
-  const rt=document.getElementById('rt'); rt.textContent='Rival desconectado'; rt.className='rt draw';
-  document.getElementById('rs').textContent='';
-  document.getElementById('rsub').textContent='Tu rival se desconectó antes de terminar. La partida no cuenta como derrota.';
-  document.getElementById('rrew').style.display='none';
-  document.getElementById('btnRematch').style.display='none';
-  document.getElementById('btnMapa').style.display='none';
-  document.getElementById('btnContinue').style.display='none';
-  document.getElementById('btnMpExit').style.display='';
+  if(MP._handled)return; // evitar avisos duplicados
+  MP._handled=true;
+  if(MP.ready && G && G.online && !G.over){
+    // Se desconectó a mitad de un duelo activo
+    G.over=true;
+    if(!silent) showToastMsg('⚠ Tu rival se desconectó.');
+    document.getElementById('ri').textContent='🔌';
+    const rt=document.getElementById('rt'); rt.textContent='Rival desconectado'; rt.className='rt draw';
+    document.getElementById('rs').textContent='';
+    document.getElementById('rsub').textContent='Tu rival se desconectó antes de terminar. La partida no cuenta como derrota.';
+    document.getElementById('rrew').style.display='none';
+    document.getElementById('btnRematch').style.display='none';
+    document.getElementById('btnMapa').style.display='none';
+    document.getElementById('btnContinue').style.display='none';
+    document.getElementById('btnMpExit').style.display='';
+    stopAmbient();
+    document.getElementById('resov').classList.add('active');
+    mpTeardown();
+  }else{
+    // Se desconectó antes de empezar (en el lobby o eligiendo mazo)
+    const lov=document.getElementById('mp-lobby-ov'); if(lov)lov.remove();
+    const dov=document.getElementById('mp-deck-ov'); if(dov)dov.remove();
+    showToastMsg('⚠ Tu rival se desconectó antes de empezar el duelo.');
+    mpTeardown();
+    showS('title-screen');
+  }
+}
+function mpLeaveDeckPicker(){
+  mpSend({t:'bye'});
+  const dov=document.getElementById('mp-deck-ov'); if(dov)dov.remove();
+  mpTeardown();
+  showS('title-screen');
+}
+function mpConfirmLeave(){
+  const ov=document.createElement('div');
+  ov.className='sell-confirm';
+  ov.innerHTML='<div class="sell-box"><h3>🚪 ¿Salir del duelo?</h3>'
+    +'<p>Vas a abandonar la partida online. Tu rival va a ver que te desconectaste.</p>'
+    +'<div class="sell-actions">'
+    +'<button class="btn xs" onclick="mpLeaveDuel();document.body.removeChild(this.closest(\'.sell-confirm\'))">Sí, salir</button>'
+    +'<button class="btn xs" style="border-color:rgba(255,255,255,.2);color:var(--td)" onclick="document.body.removeChild(this.closest(\'.sell-confirm\'))">Cancelar</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+}
+function mpLeaveDuel(){
+  mpSend({t:'bye'});
   stopAmbient();
-  document.getElementById('resov').classList.add('active');
+  showS('title-screen');
+  mpTeardown();
 }
 function mpBackToTitle(){
   document.getElementById('resov').classList.remove('active');
