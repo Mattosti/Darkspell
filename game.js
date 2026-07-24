@@ -40,6 +40,14 @@ const ELEMENTS_LIST = ['fire','storm','nat','void'];
 function fmtN(v){ return v>=10 ? 'A' : String(v); }
 
 // ── CARDS ─────────────────────────────────────────────────────
+// Versión del juego: subir este número en cada actualización importante.
+// Se muestra en el título y en el lobby online, para que dos jugadores
+// puedan confirmar rápido que están en la misma versión antes de jugar.
+const GAME_VERSION = '1';
+document.addEventListener('DOMContentLoaded',()=>{
+  const v=document.getElementById('gameVersion'); if(v) v.textContent=GAME_VERSION;
+});
+
 const CARDS=[
   // ── EXPANSIÓN II: 49 cartas nuevas (pliego v5) ──────────────
   // ★1 — comunes
@@ -2907,7 +2915,8 @@ function mpTeardown(){
 }
 function mpRenderLobbyHome(){
   const b=document.getElementById('mp-lobby-body'); if(!b)return;
-  b.innerHTML='<div style="font-family:Philosopher,serif;font-size:.72rem;color:var(--td);text-align:center;line-height:1.6">'
+  b.innerHTML='<div style="text-align:center;font-family:Cinzel,serif;font-size:.68rem;color:#f4d35e;background:rgba(244,211,94,.08);border:1px solid rgba(244,211,94,.3);border-radius:8px;padding:.3rem .6rem;">Versión '+GAME_VERSION+' &nbsp;·&nbsp; <span style="color:var(--td);font-family:Philosopher,serif;font-weight:400">confirmá que tu rival tenga la misma</span></div>'
+    +'<div style="font-family:Philosopher,serif;font-size:.72rem;color:var(--td);text-align:center;line-height:1.6">'
     +'Jugá contra otra persona en tiempo real usando las cartas de tu propia colección.<br>'
     +'<span style="color:#e0aaff">Función Beta — ambos necesitan internet.</span></div>'
     +'<button class="btn sm" style="border-color:#7fd8ff;color:#7fd8ff" onclick="mpHost()">🏠 Crear sala</button>'
@@ -2967,6 +2976,7 @@ function mpShowConnectedMenu(){
   ov.id='mp-menu-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.94);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.4rem;gap:1rem;';
   ov.innerHTML='<div style="font-family:\'Cinzel Decorative\',serif;font-size:1rem;color:#52b788;text-shadow:0 0 12px rgba(82,183,136,.5)">✓ Conectado con tu rival</div>'
+    +'<div style="font-family:Cinzel,serif;font-size:.62rem;color:rgba(255,255,255,.4)">Versión '+GAME_VERSION+' — confirmá que coincida con la de tu rival</div>'
     +'<div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:.7rem;">'
     +'<button class="btn sm" style="border-color:#7fd8ff;color:#7fd8ff" onclick="mpOpenDeckPicker()">⚔ Jugar un duelo</button>'
     +'<button class="btn sm" style="border-color:#e0aaff;color:#e0aaff" onclick="mpOpenTrade()">🔄 Intercambiar cartas</button>'
@@ -2986,7 +2996,7 @@ function mpOpenDeckPicker(){
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">'
     +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="mpShowConnectedMenu()">← Volver</button>'
     +'<div style="font-family:\'Cinzel Decorative\',serif;font-size:.85rem;color:#7fd8ff;text-align:center;flex:1">🌐 Elegí tus 5 cartas</div>'
-    +'<div style="width:64px"></div>'
+    +'<button class="btn xs" style="border-color:#4895ef;color:#4895ef" onclick="mpLeaveDeckPicker()">🚪 Salir</button>'
     +'</div>'
     +'<div id="mp-deck-slots" style="display:flex;gap:.4rem;justify-content:center;margin-bottom:.6rem"></div>'
     +'<div id="mp-deck-grid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;padding:.3rem;"></div>'
@@ -3069,8 +3079,18 @@ function mpMaybeStart(){
     for(let i=0;i<numElem;i++) cellEl[idxs[i]]=ELEMENTS_LIST[Math.floor(Math.random()*ELEMENTS_LIST.length)];
     const hostFirst=Math.random()<0.5;
     MP.cellEl=cellEl; MP.iAmFirst=hostFirst;
-    mpSend({t:'start',cellEl,hostFirst});
     mpBeginDuel();
+    // Reenvía 'start' cada 1.5s hasta que el invitado confirme que lo recibió
+    // (protege contra un mensaje perdido/demorado en la red real).
+    MP.startAcked=false;
+    if(MP._startRetry) clearInterval(MP._startRetry);
+    let tries=0;
+    MP._startRetry=setInterval(()=>{
+      tries++;
+      if(tries>6||MP.startAcked){ clearInterval(MP._startRetry); MP._startRetry=null; return; }
+      mpSend({t:'start',cellEl,hostFirst});
+    },1500);
+    mpSend({t:'start',cellEl,hostFirst});
   }
 }
 function mpOnData(msg){
@@ -3082,8 +3102,13 @@ function mpOnData(msg){
     mpRenderDeckPicker();
     mpMaybeStart();
   }else if(msg.t==='start'){
+    mpSend({t:'start_ack'});
+    if(MP.ready)return; // ya arrancó (llegó una copia repetida del reenvío), ignorar
     MP.cellEl=msg.cellEl; MP.iAmFirst=!msg.hostFirst;
     mpBeginDuel();
+  }else if(msg.t==='start_ack'){
+    MP.startAcked=true;
+    if(MP._startRetry){ clearInterval(MP._startRetry); MP._startRetry=null; }
   }else if(msg.t==='move'){
     mpReceiveMove(msg.ci,msg.cid);
   }else if(msg.t==='bye'){
@@ -3147,6 +3172,7 @@ function mpOnData(msg){
 }
 function mpBeginDuel(){
   if(MP._startWatchdog){ clearTimeout(MP._startWatchdog); MP._startWatchdog=null; }
+  if(MP._startRetry){ clearInterval(MP._startRetry); MP._startRetry=null; }
   MP.ready=true;
   const dov=document.getElementById('mp-deck-ov'); if(dov)dov.remove();
   const cellEl=[...MP.cellEl];
