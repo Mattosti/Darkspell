@@ -43,7 +43,7 @@ function fmtN(v){ return v>=10 ? 'A' : String(v); }
 // Versión del juego: subir este número en cada actualización importante.
 // Se muestra en el título y en el lobby online, para que dos jugadores
 // puedan confirmar rápido que están en la misma versión antes de jugar.
-const GAME_VERSION = '1';
+const GAME_VERSION = '2';
 document.addEventListener('DOMContentLoaded',()=>{
   const v=document.getElementById('gameVersion'); if(v) v.textContent=GAME_VERSION;
 });
@@ -2988,7 +2988,7 @@ function mpSend(msg){ if(MP.conn&&MP.conn.open) MP.conn.send(msg); }
 
 function mpOpenDeckPicker(){
   mpSel=(Array.isArray(SAVE.lastDeck)?[...new Set(SAVE.lastDeck)].filter(cid=>SAVE.coll.includes(cid)):[]).slice(0,5);
-  const lov=document.getElementById('mp-lobby-ov'); if(lov)lov.remove();
+  ['mp-lobby-ov','mp-menu-ov','mp-trade-ov'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
   const p=document.createElement('div');
   p.id='mp-deck-ov';
   p.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.95);display:flex;flex-direction:column;align-items:center;padding:1rem;overflow:hidden;';
@@ -3174,7 +3174,7 @@ function mpBeginDuel(){
   if(MP._startWatchdog){ clearTimeout(MP._startWatchdog); MP._startWatchdog=null; }
   if(MP._startRetry){ clearInterval(MP._startRetry); MP._startRetry=null; }
   MP.ready=true;
-  const dov=document.getElementById('mp-deck-ov'); if(dov)dov.remove();
+  ['mp-deck-ov','mp-menu-ov','mp-lobby-ov','mp-trade-ov'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
   const cellEl=[...MP.cellEl];
   G={board:Array(9).fill(null),cellEl,ph:[...MP.myDeck],eh:[...MP.oppDeck],sel:null,turn:'player',over:false,ps:5,es:5,did:null,online:true,perfectWin:false,energyGain:0,pendingCine:null};
   document.getElementById('elabel').textContent='🌐 Duelo en línea';
@@ -3294,7 +3294,7 @@ function mpLeaveDuel(){
 let MPTRADE={active:false,theirColl:null,myOffer:null,theirWant:null,incoming:null,pending:null};
 function mpTradeCounts(coll){const m={};coll.forEach(id=>{m[id]=(m[id]||0)+1;});return m;}
 function mpOpenTrade(){
-  ['mp-menu-ov','mp-deck-ov'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
+  ['mp-menu-ov','mp-deck-ov','mp-lobby-ov'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
   const resov=document.getElementById('resov'); if(resov)resov.classList.remove('active');
   if(!MPTRADE.active){
     MPTRADE={active:true,theirColl:null,myOffer:null,theirWant:null,incoming:null,pending:null};
