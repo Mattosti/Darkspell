@@ -24,9 +24,13 @@ document.addEventListener('DOMContentLoaded',()=>applyUIIcons());
 document.getElementById('logoMainImg').src = LOGO_MAIN;
 document.getElementById('logoSubImg').src  = LOGO_SUB;
 
-const FC   = {void:'#9d4edd',fire:'#e85d04',nat:'#52b788',storm:'#4895ef'};
+const FC   = {void:'#9d4edd',fire:'#e85d04',nat:'#52b788',storm:'#4895ef',neutral:'#8a8f98'};
 const ELEM_ICON = {void:'🌀',fire:'🔥',nat:'🍃',storm:'⚡'};
 const ELEM_ICON_KEY = {void:'icon_void',fire:'icon_fire',nat:'icon_nature',storm:'icon_storm'};
+// Elemento a MOSTRAR para una carta: las cartas neutrales conservan su 'f'
+// original (para lógica interna, ej. mazos de duelistas por facción) pero
+// visualmente se representan con el sigilo gris "neutral" en vez del suyo.
+function dispEl(c){ return c.neutral ? 'neutral' : c.f; }
 function elemIcon(el, size){
   const key = ELEM_ICON_KEY[el];
   if(!key || typeof UI_ICON === 'undefined' || !UI_ICON[key]) return ELEM_ICON[el]||''; // respaldo si algo falla
@@ -35,7 +39,7 @@ function elemIcon(el, size){
     : 'width:94%;height:94%;object-fit:contain'; // sin size: llena el círculo contenedor (insignias)
   return '<img class="ui-ic" data-ic="'+key+'" src="'+UI_ICON[key]+'" style="'+style+'">';
 }
-const ELEM_NAME = {void:'Vacío',fire:'Fuego',nat:'Naturaleza',storm:'Tormenta'};
+const ELEM_NAME = {void:'Vacío',fire:'Fuego',nat:'Naturaleza',storm:'Tormenta',neutral:'Neutral'};
 const ELEMENTS_LIST = ['fire','storm','nat','void'];
 function fmtN(v){ return v>=10 ? 'A' : String(v); }
 
@@ -43,7 +47,7 @@ function fmtN(v){ return v>=10 ? 'A' : String(v); }
 // Versión del juego: subir este número en cada actualización importante.
 // Se muestra en el título y en el lobby online, para que dos jugadores
 // puedan confirmar rápido que están en la misma versión antes de jugar.
-const GAME_VERSION = '2';
+const GAME_VERSION = '4';
 document.addEventListener('DOMContentLoaded',()=>{
   const v=document.getElementById('gameVersion'); if(v) v.textContent=GAME_VERSION;
 });
@@ -838,7 +842,7 @@ function cardFace(c, stats, elBonus){
     + '<img class="cv-frame'+(isLeg?' legendary':'')+'" src="'+(isLeg?CARD_FRAME_LEG:CARD_FRAME)+'" alt="">'
     + '<div class="cv-banner">'+c.name+'</div>'
     + '<div class="cv-stars">'+starHTML+'</div>'
-    + '<div class="cv-elem'+(boost?' elem-boost':'')+'" style="background:'+FC[c.f]+';border-color:'+FC[c.f]+';color:'+FC[c.f]+'">'+elemIcon(c.f)+'</div>'
+    + '<div class="cv-elem'+(boost?' elem-boost':'')+'" style="background:'+FC[dispEl(c)]+';border-color:'+FC[dispEl(c)]+';color:'+FC[dispEl(c)]+'">'+elemIcon(dispEl(c))+'</div>'
     + '<div class="cv-top'+(sc?' '+sc:'')+'">'+fmtN(s[0])+'</div>'
     + '<div class="cv-right'+(sc?' '+sc:'')+'">'+fmtN(s[1])+'</div>'
     + '<div class="cv-bottom'+(sc?' '+sc:'')+'">'+fmtN(s[2])+'</div>'
@@ -1752,7 +1756,7 @@ function showBoosterReveal(cards){
       if(this.dataset.flipped==='1')return;
       this.dataset.flipped='1';
       this.innerHTML=cardFace(c);
-      if(c.st>=4){ this.style.boxShadow='0 0 18px '+(FC[c.f]||'#e0aaff'); }
+      if(c.st>=4){ this.style.boxShadow='0 0 18px '+(FC[dispEl(c)]||'#e0aaff'); }
     };
     setTimeout(()=>back.click(), 400+i*350); // se revelan solas, en cadena
     wrap.appendChild(back);
@@ -2175,7 +2179,7 @@ function duelZoom(ci,hi){
     stats=null;
     ownerTag=(G.sel===hi)?'<span style="color:var(--gold)">✦ Seleccionada para jugar</span>':'';
   }
-  const fc=FC[c.f]||'var(--gold)';
+  const fc=FC[dispEl(c)]||'var(--gold)';
   const ov=document.createElement('div');
   ov.id='duel-zoom-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:460;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:1.5rem;';
@@ -2777,7 +2781,7 @@ function addLog(msg,cls){const l=document.getElementById('log');const d=document
 
 // ── TOOLTIP ───────────────────────────────────────────────────
 const ttEl=document.getElementById('tt');
-function tip(e,c){document.getElementById('ttn').textContent=c.name;document.getElementById('ttf').innerHTML='<span style="color:'+FC[c.f]+'">'+elemIcon(c.f,34)+' '+ELEM_NAME[c.f].toUpperCase()+' · '+c.st+'★</span>';const s=c.stats;document.getElementById('tts').innerHTML='<span>↑'+fmtN(s[0])+'</span><span>→'+fmtN(s[1])+'</span><span>↓'+fmtN(s[2])+'</span><span>←'+fmtN(s[3])+'</span>';document.getElementById('ttl').textContent=c.lore;ttEl.classList.add('show');tipMv(e);}
+function tip(e,c){document.getElementById('ttn').textContent=c.name;document.getElementById('ttf').innerHTML='<span style="color:'+FC[dispEl(c)]+'">'+elemIcon(dispEl(c),34)+' '+ELEM_NAME[dispEl(c)].toUpperCase()+' · '+c.st+'★</span>';const s=c.stats;document.getElementById('tts').innerHTML='<span>↑'+fmtN(s[0])+'</span><span>→'+fmtN(s[1])+'</span><span>↓'+fmtN(s[2])+'</span><span>←'+fmtN(s[3])+'</span>';document.getElementById('ttl').textContent=c.lore;ttEl.classList.add('show');tipMv(e);}
 function tipOff(){ttEl.classList.remove('show');}
 function tipMv(e){
   if(window.matchMedia('(pointer:coarse)').matches){ttEl.classList.remove('show');return;}
@@ -3033,7 +3037,10 @@ function mpRenderDeckPicker(){
   });
   const go=document.getElementById('mp-deck-go'); if(!go)return;
   if(MP.deckSent){
-    go.disabled=true; go.textContent=MP.oppReady?'Iniciando…':'Esperando al rival…';
+    go.disabled=true;
+    go.innerHTML=MP.oppReady
+      ? '<span class="mp-pulse-dots">Iniciando</span>'
+      : '<span class="mp-pulse-dots">Esperando al rival</span>';
   }else if(mpSel.length===5){
     go.disabled=false; go.textContent='⚔ ¡Confirmar equipo!'; go.onclick=mpConfirmDeck;
   }else{
@@ -3056,7 +3063,7 @@ function mpArmStartWatchdog(){
   if(MP._startWatchdog) clearTimeout(MP._startWatchdog);
   MP._startWatchdog=setTimeout(()=>{
     if(!G || !G.online) mpShowStartTimeout();
-  }, 8000);
+  }, 5000);
 }
 function mpShowStartTimeout(){
   const go=document.getElementById('mp-deck-go');
@@ -3087,9 +3094,9 @@ function mpMaybeStart(){
     let tries=0;
     MP._startRetry=setInterval(()=>{
       tries++;
-      if(tries>6||MP.startAcked){ clearInterval(MP._startRetry); MP._startRetry=null; return; }
+      if(tries>7||MP.startAcked){ clearInterval(MP._startRetry); MP._startRetry=null; return; }
       mpSend({t:'start',cellEl,hostFirst});
-    },1500);
+    },700);
     mpSend({t:'start',cellEl,hostFirst});
   }
 }
@@ -3160,7 +3167,7 @@ function mpOnData(msg){
   }else if(msg.t==='rematch'){
     if(!document.getElementById('mp-deck-ov')){
       document.getElementById('resov').classList.remove('active');
-      MP.myDeck=null; MP.oppDeck=null; MP.deckSent=false; MP.oppReady=false;
+      MP.myDeck=null; MP.oppDeck=null; MP.deckSent=false; MP.oppReady=false; MP.ready=false;
       mpOpenDeckPicker();
     }
   }else if(msg.t==='trade_bye'){
@@ -3414,7 +3421,7 @@ function mpRenderTrade(){
 
 function mpRematch(){
   document.getElementById('resov').classList.remove('active');
-  MP.myDeck=null; MP.oppDeck=null; MP.deckSent=false; MP.oppReady=false;
+  MP.myDeck=null; MP.oppDeck=null; MP.deckSent=false; MP.oppReady=false; MP.ready=false;
   mpOpenDeckPicker();
   mpSend({t:'rematch'});
 }
