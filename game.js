@@ -3037,6 +3037,28 @@ function mpConfirmDeck(){
   mpRenderDeckPicker();
   mpSend({t:'hello',deck:MP.myDeck,avatar:SAVE.avatar});
   mpMaybeStart();
+  mpArmStartWatchdog();
+}
+// Si tras confirmar el mazo el duelo no arranca en unos segundos (conexión
+// inestable, mensaje perdido), avisa y ofrece reintentar en vez de trabarse
+// en silencio para siempre.
+function mpArmStartWatchdog(){
+  if(MP._startWatchdog) clearTimeout(MP._startWatchdog);
+  MP._startWatchdog=setTimeout(()=>{
+    if(!G || !G.online) mpShowStartTimeout();
+  }, 8000);
+}
+function mpShowStartTimeout(){
+  const go=document.getElementById('mp-deck-go');
+  if(!go) return; // la pantalla ya cambió (probablemente el duelo sí arrancó)
+  go.disabled=false;
+  go.textContent='⚠ No se pudo iniciar. Reintentar';
+  go.onclick=function(){
+    go.disabled=true; go.textContent='Reintentando…';
+    mpSend({t:'hello',deck:MP.myDeck,avatar:SAVE.avatar}); // por si el primer envío se perdió
+    mpMaybeStart();
+    mpArmStartWatchdog();
+  };
 }
 function mpMaybeStart(){
   if(!MP.myDeck||!MP.oppDeck)return;
@@ -3124,6 +3146,7 @@ function mpOnData(msg){
   }
 }
 function mpBeginDuel(){
+  if(MP._startWatchdog){ clearTimeout(MP._startWatchdog); MP._startWatchdog=null; }
   MP.ready=true;
   const dov=document.getElementById('mp-deck-ov'); if(dov)dov.remove();
   const cellEl=[...MP.cellEl];
