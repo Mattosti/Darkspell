@@ -22,7 +22,8 @@
     <button class="btn title-btn" onclick="newGame()" style="border-color:#e85d04;color:#e85d04;background:rgba(45,10,0,0.85)">🔥 Juego Nuevo</button>
     <button class="btn title-btn" onclick="showIntro()">⚔ Continuar</button>
     <button class="btn title-btn" onclick="quickMatch()" style="border-color:#f4a261;color:#f4a261;background:rgba(40,20,0,0.85)">⚡ Partida Rápida</button>
-    <button class="btn title-btn" onclick="renderAchievements()" style="border-color:#ffd166;color:#ffd166;background:rgba(40,32,0,0.85);position:relative">🏆 Logros<span id="ach-badge" style="display:none;position:absolute;top:-7px;right:-7px;background:#e85d04;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:.68rem;line-height:20px;font-family:'Cinzel',serif;box-shadow:0 0 8px rgba(232,93,4,.8)"></span></button>
+    <button class="btn title-btn" onclick="showRules()" style="border-color:#7fd8ff;color:#7fd8ff;background:rgba(5,20,35,0.85)"><img class="ui-ic" data-ic="icon_rules" style="width:18px;height:18px;vertical-align:-4px"> Reglas</button>
+    <button class="btn title-btn" onclick="renderAchievements()" style="border-color:#ffd166;color:#ffd166;background:rgba(40,32,0,0.85);position:relative"><img class="ui-ic" data-ic="icon_achv" style="width:18px;height:18px;vertical-align:-4px"> Logros<span id="ach-badge" style="display:none;position:absolute;top:-7px;right:-7px;background:#e85d04;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:.68rem;line-height:20px;font-family:'Cinzel',serif;box-shadow:0 0 8px rgba(232,93,4,.8)"></span></button>
     <button class="btn title-btn" onclick="mpOpenLobby()" style="border-color:#4895ef;color:#4895ef;background:rgba(10,20,60,0.85)">🌐 Jugar Online <span style="font-size:.62rem;letter-spacing:.05em;display:block;color:#8ab6ff;text-transform:none;font-family:'Philosopher',serif;font-weight:400">Beta — 1 vs 1 en tiempo real</span></button>
   </div>
 </div>
@@ -53,7 +54,7 @@
     <div class="map-right">
       <span class="player-info" style="display:flex;align-items:center;gap:.4rem;">
       <img id="player-avatar-img" class="player-avatar" src="" alt="" onclick="showAvatarScreen()" style="cursor:pointer" title="Cambiar aspecto">
-      🃏 <span id="colcnt">5</span> &nbsp;⚡ <span id="energycnt">10</span> <span id="energy-timer" style="font-size:.58rem;color:var(--td)"></span>
+      🃏 <span id="colcnt">5</span> &nbsp;<img class="ui-ic" data-ic="icon_energy" style="width:15px;height:15px;vertical-align:-3px"> <span id="energycnt">10</span> <span id="energy-timer" style="font-size:.58rem;color:var(--td)"></span>
     </span>
       <button class="btn xs" id="w2-back-btn" style="display:none;border-color:#9d4edd;color:#bf5fff" onclick="mapBack()">← Volver</button>
       <button class="btn xs" onclick="showS('collection-screen')">📚 Colección</button>
@@ -91,10 +92,10 @@
     </div>
   </div>
   <div class="mp-bar">
-    <span class="mp-label">✨ Puntos Mágicos</span>
+    <span class="mp-label"><img class="ui-ic" data-ic="icon_mp" style="width:15px;height:15px;vertical-align:-3px"> Puntos Mágicos</span>
     <span class="mp-val" id="mp-display">0 PM</span>
-    <span class="mp-label" style="margin-left:1rem">⚡ Energía</span>
-    <span class="mp-val" id="energy-display" style="color:#f4d35e">10 ⚡</span>
+    <span class="mp-label" style="margin-left:1rem"><img class="ui-ic" data-ic="icon_energy" style="width:15px;height:15px;vertical-align:-3px"> Energía</span>
+    <span class="mp-val" id="energy-display" style="color:#f4d35e">10 <img class="ui-ic" data-ic="icon_energy" style="width:13px;height:13px;vertical-align:-2px"></span>
   </div>
   <div class="coll-tabs">
     <div class="coll-tab active" id="tab-coll" onclick="switchCollTab('coll')">Mi colección</div>
@@ -136,8 +137,6 @@
   <div class="topbar">
     <span class="tlogo">Darkspell</span>
     <div class="score"><span class="sp" id="sp">5</span><span class="sd">vs</span><span class="se" id="se">5</span></div>
-    <button id="muteBtn" class="mute-btn" onclick="toggleMute()" title="Música">🔊</button>
-    <button id="mpLeaveBtn" class="mute-btn" onclick="mpConfirmLeave()" title="Salir del duelo online" style="display:none">🚪</button>
     <span id="tbadge" class="tbadge tbp">Tu turno</span>
   </div>
   <div id="dbanner"></div>
@@ -182,9 +181,11 @@
     </div>
     <div class="rbtns" id="rbtns">
       <button class="btn sm" id="btnRematch" onclick="rematch()">🔄 Revancha</button>
-      <button class="btn sm" id="btnMapa" onclick="goMap()">🗺 Mapa</button>
+      <button class="btn sm" id="btnMapa" onclick="goMap()"><img class="ui-ic" data-ic="icon_map" style="width:16px;height:16px;vertical-align:-3px"> Mapa</button>
       <button class="btn sm green" id="btnContinue" onclick="continueNext()" style="display:none">⚔ Continuar</button>
-      <button class="btn sm" id="btnMpExit" onclick="mpBackToTitle()" style="display:none;border-color:#4895ef;color:#4895ef">🏠 Volver al inicio</button>
+      <button class="btn sm" id="btnMpRematch" onclick="mpRematch()" style="display:none;border-color:#f4a261;color:#f4a261">⚔ Jugar de nuevo</button>
+      <button class="btn sm" id="btnMpTrade" onclick="mpOpenTrade()" style="display:none;border-color:#e0aaff;color:#e0aaff">🔄 Intercambiar</button>
+      <button class="btn sm" id="btnMpExit" onclick="mpBackToTitle()" style="display:none;border-color:#4895ef;color:#4895ef">🚪 Salir</button>
     </div>
   </div>
 </div>

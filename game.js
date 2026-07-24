@@ -6,18 +6,96 @@
 
 // El jefe final usa el token del encapuchado desconocido
 TOKEN[25]=TOKEN.unknown;
+
+// Inyecta los íconos de interfaz (UI_ICON) en los <img data-ic> ya presentes en el HTML,
+// y expone iconTag() para usarlos en HTML generado dinámicamente por JS.
+function applyUIIcons(root){
+  (root||document).querySelectorAll('img.ui-ic[data-ic]').forEach(el=>{
+    const key=el.dataset.ic;
+    if(UI_ICON[key] && el.src!==UI_ICON[key]) el.src=UI_ICON[key];
+  });
+}
+function iconTag(key,size,valign){
+  return '<img class="ui-ic" src="'+(UI_ICON[key]||'')+'" style="width:'+(size||16)+'px;height:'+(size||16)+'px;vertical-align:'+(valign!=null?valign:-3)+'px">';
+}
+document.addEventListener('DOMContentLoaded',()=>applyUIIcons());
+
 // Asignar logos de la pantalla de título desde sprites.js
 document.getElementById('logoMainImg').src = LOGO_MAIN;
 document.getElementById('logoSubImg').src  = LOGO_SUB;
 
 const FC   = {void:'#9d4edd',fire:'#e85d04',nat:'#52b788',storm:'#4895ef'};
 const ELEM_ICON = {void:'🌀',fire:'🔥',nat:'🍃',storm:'⚡'};
+const ELEM_ICON_KEY = {void:'icon_void',fire:'icon_fire',nat:'icon_nature',storm:'icon_storm'};
+function elemIcon(el, size){
+  const key = ELEM_ICON_KEY[el];
+  if(!key || typeof UI_ICON === 'undefined' || !UI_ICON[key]) return ELEM_ICON[el]||''; // respaldo si algo falla
+  const style = size
+    ? 'width:'+size+'px;height:'+size+'px;vertical-align:-2px;object-fit:contain'
+    : 'width:94%;height:94%;object-fit:contain'; // sin size: llena el círculo contenedor (insignias)
+  return '<img class="ui-ic" data-ic="'+key+'" src="'+UI_ICON[key]+'" style="'+style+'">';
+}
 const ELEM_NAME = {void:'Vacío',fire:'Fuego',nat:'Naturaleza',storm:'Tormenta'};
 const ELEMENTS_LIST = ['fire','storm','nat','void'];
 function fmtN(v){ return v>=10 ? 'A' : String(v); }
 
 // ── CARDS ─────────────────────────────────────────────────────
 const CARDS=[
+  // ── EXPANSIÓN II: 49 cartas nuevas (pliego v5) ──────────────
+  // ★1 — comunes
+  {id:'ap_herrero',       name:'Aprendiz Herrero',     art:'ap_herrero',       f:'fire', st:1,neutral:true,stats:[3,3,2,3],  lore:'Sus manos no queman. Todavía no sabe por qué. Inmune al terreno.'},
+  {id:'vigia_torre',      name:'Vigía de Torre',       art:'vigia_torre',      f:'storm',st:1,neutral:true,stats:[2,3,3,3],  lore:'Su cuerno suena solo cuando la tormenta trae algo más. Inmune al terreno.'},
+  {id:'curandera_ald',    name:'Curandera de Aldea',   art:'curandera_ald',    f:'nat',  st:1,neutral:true,stats:[3,2,3,3],  lore:'Las hierbas brillan cuando ella las toca. Nunca antes. Inmune al terreno.'},
+  {id:'enterrador_noc',   name:'Enterrador Nocturno',  art:'enterrador_noc',   f:'void', st:1,neutral:true,stats:[3,3,3,2],  lore:'Su farol violeta ilumina cosas que ya no deberían moverse. Inmune al terreno.'},
+  {id:'panadero_brasas',  name:'Panadero de Brasas',   art:'panadero_brasas',  f:'fire', st:1,stats:[3,2,3,3],  lore:'Carga su horno a la espalda. El pan nunca se enfría.'},
+  {id:'marinero_rayos',   name:'Marinero de los Rayos',art:'marinero_rayos',   f:'storm',st:1,stats:[3,3,2,3],  lore:'Sus tatuajes se mueven cuando se acerca una tormenta.'},
+  {id:'jardinera_real',   name:'Jardinera Real',       art:'jardinera_real',   f:'nat',  st:1,stats:[2,3,3,3],  lore:'Sus enredaderas crecen al ritmo exacto de su respiración.'},
+  {id:'sepulturero_pal',  name:'Sepulturero Pálido',   art:'sepulturero_pal',  f:'void', st:1,stats:[3,3,2,3],  lore:'Habla con las sombras de las tumbas. Ellas le contestan.'},
+  {id:'fundidor_metal',   name:'Fundidor de Metales',  art:'fundidor_metal',   f:'fire', st:1,stats:[2,3,3,3],  lore:'Su crisol nunca se apaga, ni siquiera bajo la lluvia.'},
+  {id:'timonel_fantasma', name:'Timonel Fantasma',     art:'timonel_fantasma', f:'void', st:1,stats:[3,2,3,3],  lore:'Su bote zarpó hace un siglo. Todavía no llega a ningún puerto.'},
+  // ★2 — poco comunes
+  {id:'alquimista_fuego',   name:'Alquimista del Fuego',    art:'alquimista_fuego',   f:'fire', st:2,stats:[5,4,4,4],lore:'Sus pociones hierven solas, incluso guardadas en el frío.'},
+  {id:'cartografo_tormenta',name:'Cartógrafo de Tormentas', art:'cartografo_tormenta',f:'storm',st:2,stats:[4,5,4,4],lore:'Sus mapas cambian de forma cuando el cielo también cambia.'},
+  {id:'apicultor_druida',   name:'Apicultor Druida',        art:'apicultor_druida',   f:'nat',  st:2,stats:[4,4,5,4],lore:'Sus abejas doradas no pican. Iluminan.'},
+  {id:'medium_encadenado',  name:'Médium Encadenado',       art:'medium_encadenado',  f:'void', st:2,stats:[4,4,4,5],lore:'Oye voces que nadie más escucha. Ya perdió la cuenta.'},
+  {id:'armero_volcanico',   name:'Armero Volcánico',        art:'armero_volcanico',   f:'fire', st:2,stats:[5,4,4,5],lore:'Forja espadas dentro de géiseres. Ninguna se rompe.'},
+  {id:'navegante_corriente',name:'Navegante de Corrientes', art:'navegante_corriente',f:'storm',st:2,stats:[4,5,5,4],lore:'Surfea el rayo como si fuera una ola cualquiera.'},
+  {id:'guardabosques_cent', name:'Guardabosques Centenario',art:'guardabosques_cent', f:'nat',  st:2,neutral:true,stats:[4,5,4,5],lore:'Un ciervo espectral camina siempre un paso detrás de él. Inmune al terreno.'},
+  {id:'coleccionista_masc', name:'Coleccionista de Máscaras',art:'coleccionista_masc',f:'void', st:2,stats:[5,4,5,4],lore:'Cada máscara guarda una vida. Ninguna quiere ser olvidada.'},
+  {id:'domador_salam',      name:'Domador de Salamandras',  art:'domador_salam',      f:'fire', st:2,neutral:true,stats:[4,4,5,5],lore:'Su fragua está bajo tierra. Nadie sabe cuán abajo. Inmune al terreno.'},
+  {id:'farero_eterno',      name:'Farero de la Tormenta',   art:'farero_eterno',      f:'storm',st:2,neutral:true,stats:[5,5,4,4],lore:'Su luz no guía barcos. Calma tormentas. Inmune al terreno.'},
+  // ★3 — raras
+  {id:'inquisidora_brasas', name:'Inquisidora de las Brasas', art:'inquisidora_brasas', f:'fire', st:3,stats:[6,7,5,6],lore:'Su armadura está siempre al rojo vivo. Ella ya no lo siente.'},
+  {id:'almirante_rayo',     name:'Almirante de la Flota del Rayo',art:'almirante_rayo', f:'storm',st:3,neutral:true,stats:[7,5,6,6],lore:'Su capa chisporrotea con cada paso que da en cubierta. Inmune al terreno.'},
+  {id:'arquidruida',        name:'Arquidruida Coronado',      art:'arquidruida',        f:'nat',  st:3,stats:[6,6,6,6],lore:'Su corona florece y se seca según el humor del bosque.'},
+  {id:'nigromante_bibl',    name:'Nigromante Bibliotecario',  art:'nigromante_bibl',    f:'void', st:3,stats:[6,5,7,6],lore:'Sus libros flotan y susurran secretos que nadie pidió.'},
+  {id:'campeona_gladiadora',name:'Campeona Gladiadora',       art:'campeona_gladiadora',f:'fire', st:3,neutral:true,stats:[7,6,6,5],lore:'Sus guanteletes incendian la arena antes del primer golpe. Inmune al terreno.'},
+  {id:'corsaria_cielo',     name:'Corsaria del Cielo',        art:'corsaria_cielo',     f:'storm',st:3,stats:[6,6,5,7],lore:'Su barco vuela entre nubes de tormenta como si fueran olas.'},
+  {id:'guardiana_raices',   name:'Guardiana de las Raíces Madre',art:'guardiana_raices',f:'nat',  st:3,stats:[6,7,6,5],lore:'Mitad mujer, mitad árbol. Ya no recuerda cuál fue primero.'},
+  {id:'verdugo_mascaras',   name:'Verdugo de las Máscaras',   art:'verdugo_mascaras',   f:'void', st:3,stats:[7,6,5,6],lore:'Su rostro es humo negro. Nadie ha visto lo que hay debajo.'},
+  {id:'herrera_legend',     name:'Herrera del Corazón Ardiente',art:'herrera_legend',   f:'fire', st:3,stats:[6,6,7,5],lore:'Forja dentro de un volcán. El volcán nunca se queja.'},
+  {id:'capitana_vientos',   name:'Capitana de los Vientos Altos',art:'capitana_vientos', f:'storm',st:3,stats:[5,7,6,6],lore:'Guarda un ciclón entero en la palma de su mano.'},
+  // ★4 — épicas
+  {id:'senor_forjas',        name:'Señor de las Forjas Eternas',  art:'senor_forjas',        f:'fire', st:4,stats:[8,7,6,7],lore:'Su piel es metal fundido en calma perpetua.'},
+  {id:'heraldo_cielos_rotos',name:'Heraldo de los Cielos Rotos',  art:'heraldo_cielos_rotos',f:'storm',st:4,stats:[7,8,7,6],lore:'Mitad hombre, mitad tormenta ya cristalizada.'},
+  {id:'madre_estaciones',    name:'Madre de las Estaciones',      art:'madre_estaciones',    f:'nat',  st:4,stats:[7,7,8,6],lore:'Cuatro rostros, una sola voluntad: que el ciclo no se detenga.'},
+  {id:'custodio_tumbas',     name:'Custodio de las Tumbas Olvidadas',art:'custodio_tumbas',  f:'void', st:4,neutral:true,stats:[8,6,7,7],lore:'Su corona de huesos pertenece a nombres que ya nadie recuerda. Inmune al terreno.'},
+  {id:'titan_cenizas',       name:'Titán de las Cenizas',         art:'titan_cenizas',       f:'fire', st:4,stats:[7,8,6,7],lore:'Gigante hecho de brasas compactadas. Camina, y el suelo arde.'},
+  {id:'emperatriz_rayo',     name:'Emperatriz del Rayo Perpetuo', art:'emperatriz_rayo',     f:'storm',st:4,neutral:true,stats:[8,7,7,6],lore:'Su trono flota entre relámpagos que nunca se apagan. Inmune al terreno.'},
+  {id:'ancestro_bosque',     name:'Ancestro del Bosque Profundo', art:'ancestro_bosque',     f:'nat',  st:4,stats:[6,8,7,7],lore:'Su rostro está tallado en un roble de mil años.'},
+  {id:'archimagister_vacio', name:'Archimagister del Vacío',      art:'archimagister_vacio', f:'void', st:4,stats:[7,7,8,6],lore:'Es una biblioteca viviente de secretos que nadie debería leer.'},
+  {id:'fundidor_mundos',     name:'Fundidor de Mundos',           art:'fundidor_mundos',     f:'fire', st:4,stats:[8,6,7,7],lore:'Cada golpe de su martillo crea un volcán nuevo.'},
+  {id:'emperador_tempestad', name:'Emperador de las Tempestades', art:'emperador_tempestad', f:'storm',st:4,stats:[7,7,6,8],lore:'Su corona está hecha de nubes con ojos propios.'},
+  // ★5 — legendarias
+  {id:'corazon_volcan',          name:'Corazón del Volcán Primordial',  art:'corazon_volcan',          f:'fire', st:5,stats:[9,8,8,8],lore:'Lava viva con forma casi humana. Casi.'},
+  {id:'tormenta_nunca_termina',  name:'La Tormenta que Nunca Termina',  art:'tormenta_nunca_termina',  f:'storm',st:5,stats:[8,9,8,8],lore:'Empezó antes del primer reino. Nadie sabe cuándo termina.'},
+  {id:'arbol_recuerda',          name:'El Árbol que Recuerda Todo',     art:'arbol_recuerda',          f:'nat',  st:5,stats:[8,8,9,8],lore:'Cada anillo de su tronco es un siglo que nadie más recuerda.'},
+  {id:'devorador_nombres',       name:'El Devorador de Nombres',        art:'devorador_nombres',       f:'void', st:5,stats:[9,8,8,8],lore:'Toca algo, y ese algo olvida cómo se llamaba.'},
+  {id:'ultimo_aliento_sol',      name:'El Último Aliento del Sol',      art:'ultimo_aliento_sol',      f:'fire', st:5,stats:[8,9,8,8],lore:'Un fénix cósmico ardiendo con la luz de un sol que ya no existe.'},
+  {id:'trueno_original',         name:'El Trueno Original',             art:'trueno_original',         f:'storm',st:5,stats:[8,8,9,8],lore:'El primer sonido que hizo temblar al mundo. Nunca se fue del todo.'},
+  {id:'semilla_mundo',           name:'La Semilla del Mundo',           art:'semilla_mundo',           f:'nat',  st:5,stats:[8,8,8,9],lore:'Dicen que dentro de ella hay universos enteros esperando brotar.'},
+  {id:'silencio_vacio',          name:'El Silencio Antes del Vacío',    art:'silencio_vacio',          f:'void', st:5,stats:[9,8,8,8],lore:'No es oscuridad. Es la ausencia de todo lo que pudo haber sido.'},
+  {id:'corazon_forjas',          name:'El Corazón de Todas las Forjas', art:'corazon_forjas',          f:'fire', st:5,stats:[8,8,9,8],lore:'El fuego que templó las primeras armas del mundo. Sigue ardiendo.'},
   {id:'shade',     name:'Goblin del Pantano',art:'goblin_pantano',f:'void',st:1,stats:[3,5,4,2],lore:'Pequeño, traicionero y absolutamente impredecible.'},
   {id:'specter',   name:'Espectro Oscuro',   art:'art_specter',      f:'void', st:1,stats:[4,6,5,3],lore:'Nacido en el abismo entre mundos.'},
   {id:'voidwalker',name:'Caminante Vacío',   art:'voidwalker_new',f:'void', st:2,stats:[5,3,6,4],lore:'Atraviesa paredes como si no existieran.'},
@@ -26,11 +104,11 @@ const CARDS=[
   {id:'treefolk',  name:'Guardián Árbol',    art:'treefolk_new',f:'nat',  st:1,stats:[4,3,7,5],lore:'Vive mil años viendo caer imperios.'},
   {id:'berserker', name:'Vak Al Ho',          art:'vak_al_ho',   f:'fire', st:2,stats:[6,8,5,4],lore:'Guerrero orco de las tierras salvajes. Su escudo ha partido más huesos que se puedan contar.'},
   {id:'sombra',    name:'Sombra del Vacío',  art:'sombra_vacio',f:'void', st:3,stats:[7,3,5,8],lore:'Sus ojos violeta atraviesan las almas.'},
-  {id:'driada',    name:'Dríada Guardiana',  art:'driada',      f:'nat',  st:3,stats:[6,4,7,8],lore:'Custodia los últimos bosques sagrados.'},
+  {id:'driada',    name:'Dríada Guardiana',  art:'driada',      f:'nat',  st:3,neutral:true,stats:[6,4,7,8],lore:'Custodia los últimos bosques sagrados. Inmune al terreno.'},
   {id:'guerrero',  name:'Guerrero Infernal', art:'guerrero',    f:'fire', st:3,stats:[4,9,6,2],lore:'Forjado en el núcleo volcánico del mundo.'},
   {id:'warchief',  name:'Jefe de Guerra',    art:'warchief_new',f:'fire', st:3,stats:[8,6,3,5],lore:'Conquista o muere. No hay otra opción.'},
   {id:'lightning', name:'Relámpago Vivo',    art:'lightning_new',f:'storm',st:3,stats:[5,9,3,6],lore:'La electricidad corre por sus venas.'},
-  {id:'firelord',  name:'Señor del Fuego',   art:'firelord_new',f:'fire', st:4,stats:[8,10,4,6],lore:'Su corona arde con llama eterna.'},
+  {id:'firelord',  name:'Señor del Fuego',   art:'firelord_new',f:'fire', st:4,neutral:true,stats:[8,10,4,6],lore:'Su corona arde con llama eterna. Inmune al terreno.'},
   {id:'voidlord',  name:'Señor del Vacío',   art:'hero_dark',   f:'void', st:4,stats:[9,4,2,7],lore:'El vacío lo devora todo a su paso.'},
   {id:'dragon',    name:'Dragón del Tormento',art:'dragon',     f:'storm',st:4,stats:[8,7,5,6],lore:'Su rugido convoca la tormenta eterna.'},
   {id:'stormtitan',name:'Titán Tormenta',    art:'art_stormtitan',      f:'storm',st:4,stats:[7,6,8,5],lore:'Nació en el ojo del huracán eterno.'},
@@ -39,7 +117,7 @@ const CARDS=[
   {id:'kraken',    name:'Kraken del Abismo', art:'kraken',      f:'storm',st:5,stats:[10,8,6,7],lore:'Duerme en las profundidades. Siempre hambriento.'},
   {id:'darkspell', name:'El Darkspell',      art:'darkspell',f:'void', st:5,stats:[10,9,9,8],lore:'El hechizo que da nombre a la leyenda.'},
   {id:'familiar',  name:'Aprendiz y Familiar',art:'familiar',   f:'nat',  st:1,stats:[3,2,4,3],lore:'Un pequeño compañero verde que nunca se aleja de su libro.'},
-  {id:'aparicion', name:'Aparición Etérea',  art:'aparicion',   f:'void', st:2,stats:[4,3,5,6],lore:'Observa flotas fantasma surcar cielos que ya no existen.'},
+  {id:'aparicion', name:'Aparición Etérea',  art:'aparicion',   f:'void', st:2,neutral:true,stats:[4,3,5,6],lore:'Observa flotas fantasma surcar cielos que ya no existen. Inmune al terreno.'},
   {id:'galeon',    name:'Nila Stingarde',     art:'nila_stingarde',f:'storm',st:2,stats:[5,4,6,3],lore:'Hechicera de los mares del norte. Su sonrisa esconde más trucos que su sombrero.'},
   {id:'runeelf',   name:'Furia Rúnica',      art:'runeelf',     f:'storm',st:3,stats:[6,8,5,6],lore:'Las runas en su rostro arden cuando pierde el control.'},
   {id:'crimsondrag',name:'Dragón Carmesí',   art:'crimsondrag', f:'fire', st:4,stats:[8,9,6,5],lore:'Su aliento de fuego verde corrompe la tierra que toca.'},
@@ -115,7 +193,7 @@ const SHOP_CARDS = [
   {id:'reina_gusanos',  name:'Reina de las Sombras', art:'reina_gusanos',  f:'void', st:4,stats:[8,6,7,7],lore:'Sus súbditos serpentean por donde la luz no llega.',         cost:95},
   {id:'heraldo_silencio',name:'Heraldo del Silencio',art:'heraldo_silencio',f:'void',st:5,stats:[9,8,8,8],lore:'Donde pisa, hasta los gritos aprenden modales.',             cost:170},
   {id:'avatar_sol',     name:'Avatar del Sol Muerto',art:'avatar_sol',     f:'fire', st:5,stats:[8,9,8,8],lore:'El último dios de un cielo que ya no existe.',               cost:170},
-  {id:'ojo_tormenta',   name:'Ojo de la Tormenta Eterna',art:'ojo_tormenta',f:'storm',st:5,stats:[8,8,9,8],lore:'La tormenta no lo tiene: la tormenta ES su párpado.',       cost:170},
+  {id:'ojo_tormenta',   name:'Ojo de la Tormenta Eterna',art:'ojo_tormenta',f:'storm',st:5,neutral:true,stats:[8,8,9,8],lore:'La tormenta no lo tiene: la tormenta ES su párpado. Inmune al terreno.',       cost:170},
   {id:'madre_ciervos',  name:'Madre de los Ciervos', art:'madre_ciervos',  f:'nat',  st:5,stats:[8,8,8,9],lore:'Entre sus astas anidan primaveras que aún no ocurrieron.',   cost:170},
   {id:'primer_susurro', name:'El Primer Susurro',    art:'primer_susurro', f:'void', st:5,stats:[9,9,8,8],lore:'Antes de la luz, algo habló. Esto es lo que dijo.',          cost:190},
   {id:'runemaster', name:'Maestro de Runas',  art:'runemaster_new',f:'storm',st:2,stats:[5,6,4,5],lore:'Sus runas pueden reescribir el destino.',        cost:25},
@@ -126,9 +204,9 @@ const SHOP_CARDS = [
   {id:'soulreaper',  name:'Segador de Almas',  art:'art_soulreaper',   f:'void', st:4,stats:[9,8,5,6],lore:'Cada alma cosechada fortalece su mazo.',             cost:100},
   {id:'stormbringer',name:'Portador de Tormentas',art:'art_stormbringer',   f:'storm',st:4,stats:[8,9,6,7],lore:'La tormenta perfecta vive en sus palmas.',           cost:100},
   {id:'emberlord',   name:'Señor de las Brasas',art:'art_emberlord',f:'fire', st:4,stats:[10,9,5,6],lore:'Convierte ciudades en cenizas con un susurro.',     cost:100},
-  {id:'voidheart',   name:'Corazón del Vacío', art:'art_voidheart',   f:'void', st:5,stats:[10,8,9,7],lore:'Contiene la esencia pura de la oscuridad eterna.',  cost:200},
-  {id:'worldtree',   name:'Árbol del Mundo',   art:'art_worldtree',      f:'nat',  st:5,stats:[9,8,10,9],lore:'Sus raíces sostienen la realidad misma.',           cost:200},
-  {id:'eternaldrag', name:'Dragón Eterno',      art:'art_eternaldrag',     f:'fire', st:5,stats:[10,9,8,9],lore:'Existe desde antes que el tiempo tuviera nombre.', cost:200},
+  {id:'voidheart',   name:'Corazón del Vacío', art:'art_voidheart',   f:'void', st:5,neutral:true,stats:[10,8,9,7],lore:'Contiene la esencia pura de la oscuridad eterna. Inmune al terreno.',  cost:200},
+  {id:'worldtree',   name:'Árbol del Mundo',   art:'art_worldtree',      f:'nat',  st:5,neutral:true,stats:[9,8,10,9],lore:'Sus raíces sostienen la realidad misma. Inmune al terreno.',           cost:200},
+  {id:'eternaldrag', name:'Dragón Eterno',      art:'art_eternaldrag',     f:'fire', st:5,neutral:true,stats:[10,9,8,9],lore:'Existe desde antes que el tiempo tuviera nombre. Inmune al terreno.', cost:200},
 ];
 // Merge shop cards into CARDS for rendering
 SHOP_CARDS.forEach(c=>{if(!CARDS.find(x=>x.id===c.id))CARDS.push(c);});
@@ -137,32 +215,41 @@ SHOP_CARDS.forEach(c=>{if(!CARDS.find(x=>x.id===c.id))CARDS.push(c);});
 const DUELISTS=[
   {id:0,name:'Aldeano Tomás',  port:'tomas',  f:'nat',  emoji:'👨‍🌾',title:'Aprendiz Perdido',     diff:1,reg:0,hint:'Solo cartas básicas de aldea',   cards:['rata_pantano','duende_bosque','lanzero','musgo_vivo','lobo_gris'],   lore:'Un granjero que aprendió a jugar por aburrimiento.',defeat:'¡Ja! ¡Y yo que pensé que cualquiera podía ganarme! Volvé cuando hayas practicado un poco más.'},
   {id:1,name:'Niña Lira',      port:'lira',   f:'nat',  emoji:'👧', title:'Prodigio del Bosque',   diff:1,reg:0,hint:'Cartas de naturaleza del bosque',  cards:['duende_bosque','musgo_vivo','lobo_gris','rata_pantano','chacal_viento'],      lore:'Dice que los árboles le enseñaron a jugar.',defeat:'Los árboles me enseñaron paciencia... tú aún no la has aprendido. Intenta de nuevo.'},
-  {id:2,name:'Guardia Rowan',  port:'rowan',  f:'fire', emoji:'💂', title:'Soldado de Frontera',   diff:2,reg:0,hint:'Guerreros de fuego básicos',       cards:['lanzero','paje_fuego','acolito','chispa','grumete'],     lore:'Defiende la aldea desde hace veinte años.',defeat:'Veinte años defendiendo esta aldea, ¡no iba a caer tan fácil! Espabila y vuelve.'},
-  {id:3,name:'Mercader Vex',   port:'vex',    f:'void', emoji:'🧙', title:'Comerciante Oscuro',    diff:2,reg:1,hint:'Mezcla facciones y void menor',    cards:['centinela','sombra_menor','esqueleto','demonio_menor','nigromante'],lore:'Compra y vende secretos más que cartas.',defeat:'Cada derrota tiene un precio... y tú acaba de pagarlo. Vuelve con más monedas de experiencia.'},
-  {id:4,name:'Capitán Zarra',  port:'zarra',  f:'fire', emoji:'⚔️',title:'Comandante de la Flota', diff:3,reg:1,hint:'Fuego y tormenta combinados',      cards:['paje_fuego','acolito','escudero_llama','canon_magico','pirata_maldito'],lore:'Nunca perdió una batalla naval... ni de cartas.',defeat:'¡Mi flota nunca ha sido hundida, y hoy tampoco! Reagrupa tus fuerzas y vuelve a atacar.'},
-  {id:5,name:'Hechicera Mira', port:'mira',   f:'storm',emoji:'🔮',title:'Arcanista de Tormenta',  diff:3,reg:1,hint:'Tormenta y velocidad',             cards:['chispa','grumete','chacal_viento','jinete_trueno','medusa_marina'],lore:'Sus cartas cambian el clima cuando las juega.',defeat:'La tormenta siempre regresa... y yo también estaré aquí. Estudia bien antes de desafiarme.'},
-  {id:6,name:'Lord Grevik',    port:'grevik', f:'fire', emoji:'🏰',title:'Señor del Norte',        diff:3,reg:2,hint:'Fuego de medio y alto poder',      cards:['ogro_fango','golem_barro','druida_joven','imán_llamas','oso_roca'], lore:'Gobernó el norte con puño de hierro.',defeat:'El norte me ha obedecido por décadas. Tú no eres excepción. Vuélvete, forastero.'},
-  {id:7,name:'Bruja Valdra',   port:'valdra', f:'void', emoji:'🧙‍♀️',title:'Maga de las Sombras',  diff:4,reg:2,hint:'Vacío oscuro y alto poder',       cards:['fantasma_guerra','espía_sombra','nigromante','voidwalker','specter'],lore:'Se dice que robó su primer mazo de un dios menor.',defeat:'Las sombras te han engullido, como a todos los que se atrevieron. Huye mientras puedas.'},
+  {id:2,name:'Guardia Rowan',  port:'rowan',  f:'fire', emoji:'💂', title:'Soldado de Frontera',   diff:2,reg:0,hint:'Guerreros de fuego básicos',       cards:['vigia_torre','paje_fuego','acolito','chispa','grumete'],     lore:'Defiende la aldea desde hace veinte años.',defeat:'Veinte años defendiendo esta aldea, ¡no iba a caer tan fácil! Espabila y vuelve.'},
+  {id:3,name:'Mercader Vex',   port:'vex',    f:'void', emoji:'🧙', title:'Comerciante Oscuro',    diff:2,reg:1,hint:'Mezcla facciones y void menor',    cards:['coleccionista_masc','sombra_menor','esqueleto','demonio_menor','nigromante'],lore:'Compra y vende secretos más que cartas.',defeat:'Cada derrota tiene un precio... y tú acaba de pagarlo. Vuelve con más monedas de experiencia.'},
+  {id:4,name:'Capitán Zarra',  port:'zarra',  f:'fire', emoji:'⚔️',title:'Comandante de la Flota', diff:3,reg:1,hint:'Fuego y tormenta combinados',      cards:['paje_fuego','acolito','escudero_llama','canon_magico','timonel_fantasma'],lore:'Nunca perdió una batalla naval... ni de cartas.',defeat:'¡Mi flota nunca ha sido hundida, y hoy tampoco! Reagrupa tus fuerzas y vuelve a atacar.'},
+  {id:5,name:'Hechicera Mira', port:'mira',   f:'storm',emoji:'🔮',title:'Arcanista de Tormenta',  diff:3,reg:1,hint:'Tormenta y velocidad',             cards:['chispa','grumete','cartografo_tormenta','jinete_trueno','medusa_marina'],lore:'Sus cartas cambian el clima cuando las juega.',defeat:'La tormenta siempre regresa... y yo también estaré aquí. Estudia bien antes de desafiarme.'},
+  {id:6,name:'Lord Grevik',    port:'grevik', f:'fire', emoji:'🏰',title:'Señor del Norte',        diff:3,reg:2,hint:'Fuego de medio y alto poder',      cards:['ogro_fango','golem_barro','druida_joven','armero_volcanico','oso_roca'], lore:'Gobernó el norte con puño de hierro.',defeat:'El norte me ha obedecido por décadas. Tú no eres excepción. Vuélvete, forastero.'},
+  {id:7,name:'Bruja Valdra',   port:'valdra', f:'void', emoji:'🧙‍♀️',title:'Maga de las Sombras',  diff:4,reg:2,hint:'Vacío oscuro y alto poder',       cards:['fantasma_guerra','espía_sombra','medium_encadenado','voidwalker','specter'],lore:'Se dice que robó su primer mazo de un dios menor.',defeat:'Las sombras te han engullido, como a todos los que se atrevieron. Huye mientras puedas.'},
   {id:8,name:'Archimago Eron', port:'eron',   f:'storm',emoji:'⚡',title:'Maestro de las Runas',   diff:4,reg:2,hint:'Tormenta legendaria',               cards:['jinete_trueno','medusa_marina','gnomo_runa','runeelf','lightning'],lore:'Descifró el Darkspell. Casi lo destruye en el proceso.',defeat:'El Darkspell tiene siglos de sabiduría. Tú, apenas unos minutos. Vuelve a estudiar.'},
-  {id:9,name:'General Drak',   port:'drak',   f:'void', emoji:'💀',title:'Mano del Señor Oscuro',  diff:4,reg:3,hint:'Las mejores cartas del Vacío',     cards:['voidwalker','specter','sombra','fantasma_guerra','espía_sombra'],lore:'Sirve a Malachar hace dos siglos. Nunca ha envejecido.',defeat:'Doscientos años sirviendo a la oscuridad... y tú creías poder con eso. Impresionante tu audacia, lamentable tu fin.'},
-  {id:10,name:'Reina Sylara',  port:'sylara', f:'nat',  emoji:'👸',title:'Última Reina Elfa',      diff:5,reg:3,hint:'Las cartas más balanceadas',        cards:['elfqueen','driada','sylvan','treefolk','runeelf'],lore:'Su mazo fue bendecido por los dioses del bosque eterno.',defeat:'Los dioses del bosque eterno me protegen. No eres digno de la Ciudadela, no todavía.'},
+  {id:9,name:'General Drak',   port:'drak',   f:'void', emoji:'💀',title:'Mano del Señor Oscuro',  diff:4,reg:3,hint:'Las mejores cartas del Vacío',     cards:['custodio_tumbas','specter','sombra','fantasma_guerra','espía_sombra'],lore:'Sirve a Malachar hace dos siglos. Nunca ha envejecido.',defeat:'Doscientos años sirviendo a la oscuridad... y tú creías poder con eso. Impresionante tu audacia, lamentable tu fin.'},
+  {id:10,name:'Reina Sylara',  port:'sylara', f:'nat',  emoji:'👸',title:'Última Reina Elfa',      diff:5,reg:3,hint:'Las cartas más balanceadas',        cards:['elfqueen','ancestro_bosque','sylvan','treefolk','runeelf'],lore:'Su mazo fue bendecido por los dioses del bosque eterno.',defeat:'Los dioses del bosque eterno me protegen. No eres digno de la Ciudadela, no todavía.'},
   {id:11,name:'Lord Malachar', port:'malachar2',f:'void',emoji:'👑',title:'El Destructor Eterno',   diff:5,reg:3,hint:'El mazo más poderoso del reino',    cards:['archon','voidlord','sombra','fantasma_guerra','espía_sombra'],lore:'Quien lo vence, se convierte en leyenda. Ninguno lo ha logrado... aún.',defeat:'Nadie ha quebrado el Darkspell en mil años. Tú no serás el primero. Arrodíllate.'},
   // ── MUNDO 2: El Vacío Eterno ──────────────────────────────────
-  {id:12,name:'La Sombra de Sid',   port:'malachar2',f:'void', emoji:'👤',title:'Eco del Otro Lado',        diff:5,reg:4, world:2,hint:'Una copia oscura de Sid Ionem',    cards:['archon','voidlord','voidwalker','sombra','specter'],      lore:'Lo que Sid Ionem habría sido si hubiera cruzado al otro lado.',      defeat:'Eres un espejo roto de lo que debiste ser.'},
-  {id:13,name:'Xal la Desterrada',  port:'valdra',   f:'void', emoji:'🌑',title:'Exiliada del Vacío',        diff:5,reg:4, world:2,hint:'Void puro de alto poder',          cards:['apocbeast','titancosmico','sombra','voidwalker','espía_sombra'],   lore:'Fue exiliada del vacío mismo por ser demasiado oscura.',            defeat:'El exilio me hizo más fuerte que cualquier reino.'},
-  {id:14,name:'Kael Tormenta',      port:'eron',     f:'storm',emoji:'⛈️',title:'Señor del Cielo Roto',     diff:5,reg:5, world:2,hint:'Tormenta al máximo poder',         cards:['leviathan','lightning','runeelf','jinete_trueno','medusa_marina'],   lore:'Partió los cielos en dos. El trueno aún lleva su nombre.',          defeat:'El cielo obedece solo mis órdenes. El tuyo se rompió.'},
-  {id:15,name:'Driada Corrupta',    port:'sylara',   f:'nat',  emoji:'🌿',title:'Guardiana Caída',           diff:5,reg:5, world:2,hint:'Naturaleza oscura y bestias',      cards:['elfqueen','apocbeast','driada','sylvan','oso_roca'],    lore:'El bosque eterno la rechazó. Ahora ella lo consume.',               defeat:'La raíz que no crece hacia arriba, crece hacia el abismo.'},
-  {id:16,name:'Almirante Nox',      port:'zarra',    f:'storm',emoji:'🚢',title:'Capitán de la Flota Negra', diff:6,reg:6, world:2,hint:'Tormenta legendaria combinada',    cards:['kraken','stormtitan','lightning','medusa_marina','jinete_trueno'],lore:'Su flota nunca fue vista. Solo el rastro de naufragios.',           defeat:'El mar negro te reclama. Que descanses en sus profundidades.'},
-  {id:17,name:'Pyros el Inmortal',  port:'grevik',   f:'fire', emoji:'🔥',title:'Dios del Fuego Antiguo',    diff:6,reg:6, world:2,hint:'Fuego legendario y destrucción',   cards:['firelord','crimsondrag','warchief','guerrero','imán_llamas'],lore:'Arde desde antes que existiera la primera estrella.',               defeat:'El fuego nunca muere. Yo tampoco.'},
-  {id:18,name:'El Archivista',      port:'vex',      f:'void', emoji:'📜',title:'Guardián del Conocimiento',  diff:6,reg:7, world:2,hint:'El mazo más estudiado del vacío', cards:['darkspell','voidlord','sombra','nigromante','espía_sombra'],lore:'Lleva siglos coleccionando los secretos de cada duelo.',            defeat:'Lo sabía todo de ti. Y aun así... interesante.'},
-  // ── MUNDO 3: Los Cinco Espectros ──────────────────────────────
-  {id:20,name:'Espectro de la Guerra',   port:'grevik',   f:'fire', emoji:'🔥',title:'Eco de Mil Batallas',      diff:5,reg:8, world:3,hint:'Fuego mixto, presión constante',  cards:['warchief','guerrero','escudero_llama','imán_llamas','firelord'],   lore:'El eco de cada guerra que el reino olvidó. Arde sin consumirse.',      defeat:'Las guerras no terminan. Solo cambian de campo.'},
-  {id:21,name:'Espectro de la Tormenta', port:'eron',     f:'storm',emoji:'⛈️',title:'Eco del Primer Trueno',    diff:5,reg:8, world:3,hint:'Tormenta veloz y letal',        cards:['runeelf','lightning','jinete_trueno','medusa_marina','kraken'],    lore:'Nació del primer rayo que tocó la tierra. Aún resuena.',               defeat:'El trueno siempre vuelve. Yo también.'},
-  {id:22,name:'Espectro del Bosque',     port:'sylara',   f:'nat',  emoji:'🌲',title:'Eco de la Primera Semilla', diff:5,reg:8, world:3,hint:'Naturaleza defensiva y paciente',cards:['driada','sylvan','oso_roca','golem_barro','elfqueen'],             lore:'Recuerda cada árbol talado, cada raíz arrancada.',                     defeat:'El bosque es paciente. Puede esperar otra era.'},
-  {id:23,name:'Espectro del Abismo',     port:'valdra',   f:'void', emoji:'🌑',title:'Eco de lo Innombrable',     diff:6,reg:8, world:3,hint:'Vacío puro, alto poder',        cards:['sombra','nigromante','fantasma_guerra','voidlord','apocbeast'],    lore:'Lo que quedó cuando el abismo miró de vuelta.',                        defeat:'Miraste demasiado tiempo. Ahora te conozco.'},
-  {id:24,name:'El Espectro Sin Nombre',  port:'malachar2',f:'void', emoji:'🕳',title:'El Último Guardián',        diff:6,reg:8, world:3,hint:'El duelo definitivo',           cards:['darkspell','skullking','archon','sombra','espía_sombra'],          lore:'No custodia un tesoro. Custodia el final de la historia.',             defeat:'...Aún no. Pero estás cerca de comprender.'},
-  {id:25,name:'El Vacío Encarnado', port:'malachar2',f:'void', emoji:'🕳',title:'El Final de Todo',           diff:6,reg:9, world:3,hint:'Todo su mazo es legendario',      cards:['darkspell','titancosmico','skullking','elfqueen','leviathan'],     lore:'Cuando los Cinco Espectros callaron, el agujero negro abrió los ojos. No custodia el final: ES el final.', defeat:'Imposible... ¿Qué sos vos, que apagás la oscuridad misma?'},
-  {id:19,name:'El Origen',          port:'malachar2',f:'void', emoji:'🌀',title:'Lo Que Existió Antes',       diff:6,reg:7, world:2,hint:'El mazo definitivo del Vacío',    cards:['skullking','darkspell','titancosmico','sombra','fantasma_guerra'],lore:'No tiene nombre propio. Existía antes del lenguaje.',               defeat:'...Inesperado. Quizás el tiempo sí cambia las cosas.'},
+  {id:12,name:'La Sombra de Sid',   port:'malachar2',f:'void', emoji:'👤',title:'Eco del Otro Lado',        diff:5,reg:4, world:3,hint:'Una copia oscura de Sid Ionem',    cards:['archon','voidlord','voidwalker','sombra','specter'],      lore:'Lo que Sid Ionem habría sido si hubiera cruzado al otro lado.',      defeat:'Eres un espejo roto de lo que debiste ser.'},
+  {id:13,name:'Xal la Desterrada',  port:'valdra',   f:'void', emoji:'🌑',title:'Exiliada del Vacío',        diff:5,reg:4, world:3,hint:'Void puro de alto poder',          cards:['apocbeast','titancosmico','sombra','voidwalker','espía_sombra'],   lore:'Fue exiliada del vacío mismo por ser demasiado oscura.',            defeat:'El exilio me hizo más fuerte que cualquier reino.'},
+  {id:14,name:'Kael Tormenta',      port:'eron',     f:'storm',emoji:'⛈️',title:'Señor del Cielo Roto',     diff:5,reg:5, world:3,hint:'Tormenta al máximo poder',         cards:['leviathan','emperatriz_rayo','runeelf','jinete_trueno','medusa_marina'],   lore:'Partió los cielos en dos. El trueno aún lleva su nombre.',          defeat:'El cielo obedece solo mis órdenes. El tuyo se rompió.'},
+  {id:15,name:'Driada Corrupta',    port:'sylara',   f:'nat',  emoji:'🌿',title:'Guardiana Caída',           diff:5,reg:5, world:3,hint:'Naturaleza oscura y bestias',      cards:['elfqueen','apocbeast','driada','sylvan','oso_roca'],    lore:'El bosque eterno la rechazó. Ahora ella lo consume.',               defeat:'La raíz que no crece hacia arriba, crece hacia el abismo.'},
+  {id:16,name:'Almirante Nox',      port:'zarra',    f:'storm',emoji:'🚢',title:'Capitán de la Flota Negra', diff:6,reg:6, world:3,hint:'Tormenta legendaria combinada',    cards:['kraken','stormtitan','lightning','medusa_marina','jinete_trueno'],lore:'Su flota nunca fue vista. Solo el rastro de naufragios.',           defeat:'El mar negro te reclama. Que descanses en sus profundidades.'},
+  {id:17,name:'Pyros el Inmortal',  port:'grevik',   f:'fire', emoji:'🔥',title:'Dios del Fuego Antiguo',    diff:6,reg:6, world:3,hint:'Fuego legendario y destrucción',   cards:['firelord','senor_forjas','warchief','guerrero','imán_llamas'],lore:'Arde desde antes que existiera la primera estrella.',               defeat:'El fuego nunca muere. Yo tampoco.'},
+  {id:18,name:'El Archivista',      port:'vex',      f:'void', emoji:'📜',title:'Guardián del Conocimiento',  diff:6,reg:7, world:3,hint:'El mazo más estudiado del vacío', cards:['darkspell','voidlord','sombra','nigromante','espía_sombra'],lore:'Lleva siglos coleccionando los secretos de cada duelo.',            defeat:'Lo sabía todo de ti. Y aun así... interesante.'},
+  // ── MUNDO 3: El Reino Invertido ────────────────────────────────
+  {id:26,name:'Inquisidora Ren',   port:'malachar2', f:'fire', emoji:'🔥',title:'Justicia de Brasas',        diff:6,reg:10,world:2,hint:'Fuego ofensivo, castiga rápido',   cards:['escudero_llama','armero_volcanico','domador_salam','inquisidora_brasas','imán_llamas'], lore:'Juzga con el fuego. Nunca ha absuelto a nadie.',                        defeat:'El fuego no perdona. Y yo tampoco.'},
+  {id:27,name:'Nigromante Vael',   port:'malachar2', f:'void', emoji:'📖',title:'Bibliotecario del Olvido', diff:6,reg:10,world:2,hint:'Vacío táctico, libros que atacan', cards:['sombra_menor','coleccionista_masc','medium_encadenado','nigromante_bibl','espía_sombra'], lore:'Cada libro que posee fue, alguna vez, una persona con nombre.',        defeat:'Otro nombre más para mi biblioteca. Gracias.'},
+  {id:28,name:'Almirante Rhess',   port:'malachar2', f:'storm',emoji:'⚓',title:'Señor de la Flota Rota',   diff:6,reg:11,world:2,hint:'Tormenta naval, constante',        cards:['gnomo_runa','cartografo_tormenta','navegante_corriente','almirante_rayo','medusa_marina'], lore:'Su flota naufragó hace un siglo. Sigue dando órdenes igual.',           defeat:'Ni el naufragio me detuvo. ¿Creíste que tú lo harías?'},
+  {id:29,name:'Guardiana Sel',     port:'malachar2', f:'nat',  emoji:'🌿',title:'Custodia de lo Torcido',   diff:6,reg:11,world:2,hint:'Naturaleza corrupta, resistente',   cards:['duende_bosque','apicultor_druida','guardabosques_cent','guardiana_raices','oso_roca'], lore:'Protege un bosque que ya no existe en este lado del espejo.',          defeat:'Las raíces siempre vuelven a crecer. Incluso las torcidas.'},
+  {id:30,name:'Campeona Ixara',    port:'malachar2', f:'fire', emoji:'⚔',title:'Gladiadora del Reflejo',   diff:6,reg:12,world:2,hint:'Fuego agresivo, alto poder',       cards:['herrera_legend','domador_salam','armero_volcanico','campeona_gladiadora','firelord'], lore:'Ganó su libertad mil veces. En este reino, no cuenta ninguna.',        defeat:'En el espejo también gano. Siempre gano.'},
+  {id:31,name:'Verdugo Nyx',       port:'malachar2', f:'void', emoji:'🗿',title:'Ejecutor de Máscaras',     diff:6,reg:12,world:2,hint:'Vacío puro, sin piedad',           cards:['espía_sombra','coleccionista_masc','nigromante_bibl','verdugo_mascaras','sombra'], lore:'Nadie ha visto su rostro. Ni siquiera él lo recuerda ya.',              defeat:'Una máscara menos por descubrir. Qué lástima.'},
+  {id:32,name:'Corsaria Vael',     port:'malachar2', f:'storm',emoji:'🌪',title:'Capitana del Cielo Roto', diff:6,reg:13,world:2,hint:'Tormenta veloz, casi imparable',   cards:['jinete_trueno','almirante_rayo','navegante_corriente','corsaria_cielo','stormtitan'], lore:'Su barco vuela entre nubes que no deberían existir.',                   defeat:'El cielo de este reino es mío. Siempre lo fue.'},
+  {id:33,name:'El Rey Invertido',  port:'malachar2', f:'void', emoji:'👑',title:'Trono de lo que Pudo Ser', diff:7,reg:13,world:2,hint:'El jefe del Reino Invertido',       cards:['custodio_tumbas','archimagister_vacio','verdugo_mascaras','voidlord','silencio_vacio'], lore:'Es lo que Aetherion pudo haber sido, si el reino hubiera perdido.',     defeat:'Gobernás un reflejo roto. Yo gobernaba el original.'},
+  // ── MUNDO 4: Los Heraldos Oscuros ──────────────────────────────
+  {id:20,name:'Heraldo de la Guerra',    port:'grevik',   f:'fire', emoji:'🔥',title:'Eco de Mil Batallas',      diff:5,reg:8, world:4,hint:'Fuego mixto, presión constante',  cards:['warchief','guerrero','escudero_llama','imán_llamas','firelord'],   lore:'El eco de cada guerra que el reino olvidó. Arde sin consumirse.',      defeat:'Las guerras no terminan. Solo cambian de campo.'},
+  {id:21,name:'Heraldo de la Tormenta',  port:'eron',     f:'storm',emoji:'⛈️',title:'Eco del Primer Trueno',    diff:5,reg:8, world:4,hint:'Tormenta veloz y letal',        cards:['runeelf','heraldo_cielos_rotos','jinete_trueno','medusa_marina','kraken'],    lore:'Nació del primer rayo que tocó la tierra. Aún resuena.',               defeat:'El trueno siempre vuelve. Yo también.'},
+  {id:22,name:'Heraldo del Bosque',      port:'sylara',   f:'nat',  emoji:'🌲',title:'Eco de la Primera Semilla', diff:5,reg:8, world:4,hint:'Naturaleza defensiva y paciente',cards:['madre_estaciones','sylvan','oso_roca','golem_barro','elfqueen'],             lore:'Recuerda cada árbol talado, cada raíz arrancada.',                     defeat:'El bosque es paciente. Puede esperar otra era.'},
+  {id:23,name:'Heraldo del Abismo',      port:'valdra',   f:'void', emoji:'🌑',title:'Eco de lo Innombrable',     diff:6,reg:8, world:4,hint:'Vacío puro, alto poder',        cards:['sombra','archimagister_vacio','fantasma_guerra','voidlord','apocbeast'],    lore:'Lo que quedó cuando el abismo miró de vuelta.',                        defeat:'Miraste demasiado tiempo. Ahora te conozco.'},
+  {id:24,name:'El Heraldo Sin Nombre',   port:'malachar2',f:'void', emoji:'🕳',title:'El Último Guardián',        diff:6,reg:8, world:4,hint:'El duelo definitivo',           cards:['darkspell','skullking','silencio_vacio','sombra','espía_sombra'],          lore:'No custodia un tesoro. Custodia el final de la historia.',             defeat:'...Aún no. Pero estás cerca de comprender.'},
+  {id:25,name:'El Vacío Encarnado', port:'malachar2',f:'void', emoji:'🕳',title:'El Final de Todo',           diff:6,reg:9, world:4,hint:'Todo su mazo es legendario',      cards:['darkspell','titancosmico','skullking','elfqueen','corazon_volcan'],     lore:'Cuando los Cinco Heraldos Oscuros callaron, el agujero negro abrió los ojos. No custodia el final: ES el final.', defeat:'Imposible... ¿Qué sos vos, que apagás la oscuridad misma?'},
+  {id:19,name:'El Origen',          port:'malachar2',f:'void', emoji:'🌀',title:'Lo Que Existió Antes',       diff:6,reg:7, world:3,hint:'El mazo definitivo del Vacío',    cards:['skullking','darkspell','titancosmico','sombra','fantasma_guerra'],lore:'No tiene nombre propio. Existía antes del lenguaje.',               defeat:'...Inesperado. Quizás el tiempo sí cambia las cosas.'},
 ];
 const REGS=[
   {name:'🌾 Tierras del Comienzo',col:'#52b788'},
@@ -180,6 +267,26 @@ const CINE_DATA=[
   {img:'c3',title:'El Trono Vacío',
    text:'El Darkspell se apaga en las manos de Malachar y su corona rueda por las escaleras del trono. El reino, libre del Destructor Eterno, respira por primera vez en generaciones. Pero en las cartas que aún brillan con magia oscura, una pregunta queda flotando: ¿qué despertó realmente al abrir ese trono?'},
 ];
+
+
+// Escenas del Vacío Eterno y El Reino Invertido: reutilizan arte de cartas
+// ya existente (sin ilustraciones dedicadas) para no sumar peso al juego.
+CINE_DATA[4]={art:'sombra_vacio',title:'El Reflejo que Observa',
+  text:'El velo tras Malachar se abre en un espacio que no debería existir. Sid observa cada movimiento del viajero desde un espejo que nunca refleja lo mismo dos veces. "Otro que cree que esto es un final," susurra. "Aquí, todo empieza de nuevo, y peor."'};
+CINE_DATA[5]={art:'art_stormbringer',title:'El Cielo se Rompe',
+  text:'El Espejo Roto queda atrás, pero el cielo del Vacío jamás estuvo entero. Kael Tormenta convoca vientos que no obedecen ninguna dirección conocida, y la Dríada Corrupta observa desde raíces que crecen hacia arriba, buscando un sol que no existe en este lado del velo.'};
+CINE_DATA[6]={art:'kraken',title:'Las Aguas que No Reflejan',
+  text:'Bajo Cielos Partidos se extiende un mar sin luna ni estrellas: el Mar Negro. Almirante Nox navega una flota hundida hace siglos, y Pyros el Inmortal arde bajo el agua sin apagarse nunca. Algo enorme se mueve en las profundidades, esperando su turno.'};
+CINE_DATA[7]={art:'apocbeast',title:'Donde Todo Comenzó',
+  text:'El Mar Negro desemboca en un solo punto: El Origen. Aquí no hay más territorio del Vacío que cruzar — solo El Archivista, guardián de cada secreto, y detrás de él, la entidad que le da nombre a este lugar. Vencerla podría abrir algo que el reino no está listo para ver.'};
+CINE_DATA[10]={art:'devorador_rec',title:'El Reflejo Cobra Forma',
+  text:'Del otro lado del reflejo, Aetherion existe torcido: un reino que ganó todas las guerras que el original perdió. Inquisidora Ren juzga con fuego a quien no jura lealtad al trono invertido, y el Nigromante Vael archiva cada nombre que cruza el umbral. El tuyo, ya lo anotó.'};
+CINE_DATA[11]={art:'custodio_tumbas',title:'La Fortaleza que Nunca Cayó',
+  text:'Ecos de Cristal se astilla detrás. El Bastión Quebrado se sostiene con hilos de energía violeta donde debería haber piedra. Almirante Rhess comanda una flota que naufragó hace un siglo y sigue dando órdenes, y la Guardiana Sel custodia raíces de un bosque que ya no existe en ningún mapa.'};
+CINE_DATA[12]={art:'verdugo_ciego',title:'El Ocaso que No Termina',
+  text:'El sol de este reino se puso hace mucho y decidió quedarse así. En la Vigía del Ocaso, la Campeona Ixara gana combates que ya ganó mil veces antes, y el Verdugo Nyx ejecuta sentencias sin rostro propio. Cada victoria aquí se siente, extrañamente, como un eco.'};
+CINE_DATA[13]={art:'archimagister_vacio',title:'El Trono que Pudo Ser',
+  text:'Solo queda el Trono Invertido. La Corsaria Vael vuela entre nubes que no deberían sostener nada, guardiana de las últimas puertas. Y detrás de ellas, sentado en un reflejo perfecto del poder que Aetherion nunca dejó caer en malas manos, espera El Rey Invertido.'};
 
 // ── SAVE (autoguardado) ───────────────────────────────────────
 const INITIAL_COLL=['rata_pantano','esqueleto','lanzero','chispa','escudero_llama','jinete_trueno']; // 6 de inicio: cuatro ★1 + dos ★2 para tener chance temprana
@@ -255,7 +362,7 @@ function showNoEnergy(cost){
   document.body.appendChild(ov);
 }
 function mapBack(){
-  if(SAVE.world===3)SAVE.world=2; else SAVE.world=1;
+  SAVE.world=Math.max(1,SAVE.world-1);
   save(); renderMap();
 }
 
@@ -266,7 +373,8 @@ const ACHIEVEMENTS=[
   {id:'primera_sangre', icon:'⚔', name:'Primera Sangre',      desc:'Ganá tu primer duelo',                      goal:1,  prog:()=>Math.min(1,(SAVE.stats&&SAVE.stats.duelsWon)||0),                    reward:{energy:5}},
   {id:'conquistador',   icon:'🏰', name:'Conquistador',        desc:'Completá el Mundo 1 (12 duelistas)',        goal:12, prog:()=>SAVE.beaten.filter(x=>x<=11).length,                                  reward:{energy:10}},
   {id:'senor_vacio',    icon:'🌀', name:'Señor del Vacío',     desc:'Completá el Vacío Eterno (8 duelistas)',    goal:8,  prog:()=>SAVE.beaten.filter(x=>x>=12&&x<=19).length,                           reward:{energy:15}},
-  {id:'cazafantasmas',  icon:'👻', name:'Cazador de Espectros',desc:'Vencé a los Cinco Espectros',               goal:5,  prog:()=>SAVE.beaten.filter(x=>x>=20&&x<=24).length,                           reward:{card:'apocbeast'}},
+  {id:'reino_invertido', icon:'👑', name:'Amo del Reflejo',      desc:'Completá El Reino Invertido (8 duelistas)', goal:8,  prog:()=>SAVE.beaten.filter(x=>x>=26&&x<=33).length,                           reward:{energy:15}},
+  {id:'cazafantasmas',  icon:'👻', name:'Cazador de Heraldos',  desc:'Vencé a los Cinco Heraldos Oscuros',        goal:5,  prog:()=>SAVE.beaten.filter(x=>x>=20&&x<=24).length,                           reward:{card:'apocbeast'}},
   {id:'leyenda',        icon:'🏆', name:'Leyenda de Aetherion',desc:'Completá el juego: vencé al Vacío Encarnado',goal:1, prog:()=>SAVE.beaten.includes(25)?1:0,                                         reward:{card:'titancosmico'}},
   {id:'coleccionista',  icon:'📚', name:'Coleccionista',       desc:'Reuní 30 cartas únicas',                    goal:30, prog:()=>new Set(SAVE.coll).size,                                              reward:{energy:10}},
   {id:'completista',    icon:'✨', name:'Colección Completa',  desc:'Reuní todas las cartas del juego',          goal:()=>CARDS.length, prog:()=>new Set(SAVE.coll).size,                                reward:{energy:30}},
@@ -575,7 +683,12 @@ let actx=null,musicGain=null,musicMuted=false,ambient=null,noiseBuffer=null;
 const MUSIC_VOL=0.22;
 function updateMuteBtn(){
   const b=document.getElementById('muteBtn');if(!b)return;
-  b.textContent=musicMuted?'🔇':'🔊';
+  const img=b.querySelector('img.ui-ic');
+  if(img){
+    img.src=musicMuted?UI_ICON.icon_soundoff:UI_ICON.icon_soundon;
+    img.dataset.ic=musicMuted?'icon_soundoff':'icon_soundon';
+    img.style.filter='none';
+  }
   b.classList.toggle('off',musicMuted);
 }
 function toggleMute(){
@@ -717,7 +830,7 @@ function cardFace(c, stats, elBonus){
     + '<img class="cv-frame'+(isLeg?' legendary':'')+'" src="'+(isLeg?CARD_FRAME_LEG:CARD_FRAME)+'" alt="">'
     + '<div class="cv-banner">'+c.name+'</div>'
     + '<div class="cv-stars">'+starHTML+'</div>'
-    + '<div class="cv-elem'+(boost?' elem-boost':'')+'" style="background:'+FC[c.f]+';border-color:'+FC[c.f]+';color:'+FC[c.f]+'">'+ELEM_ICON[c.f]+'</div>'
+    + '<div class="cv-elem'+(boost?' elem-boost':'')+'" style="background:'+FC[c.f]+';border-color:'+FC[c.f]+';color:'+FC[c.f]+'">'+elemIcon(c.f)+'</div>'
     + '<div class="cv-top'+(sc?' '+sc:'')+'">'+fmtN(s[0])+'</div>'
     + '<div class="cv-right'+(sc?' '+sc:'')+'">'+fmtN(s[1])+'</div>'
     + '<div class="cv-bottom'+(sc?' '+sc:'')+'">'+fmtN(s[2])+'</div>'
@@ -727,7 +840,7 @@ function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.ran
 
 // ── ELEMENT LEGEND ────────────────────────────────────────────
 function legendHTML(){
-  return ELEMENTS_LIST.map(e=>'<span class="lg"><span class="lgicon" style="background:'+FC[e]+'aa;border-color:'+FC[e]+'">'+ELEM_ICON[e]+'</span> '+ELEM_NAME[e]+'</span>').join('');
+  return ELEMENTS_LIST.map(e=>'<span class="lg"><span class="lgicon" style="background:'+FC[e]+'aa;border-color:'+FC[e]+'">'+elemIcon(e)+'</span> '+ELEM_NAME[e]+'</span>').join('');
 }
 
 // ── SCREENS ───────────────────────────────────────────────────
@@ -900,14 +1013,17 @@ function renderMap(){
   const w2btn=document.getElementById('w2-back-btn');
   if(w2btn){
     w2btn.style.display=SAVE.world>=2?'':'none';
-    w2btn.textContent=SAVE.world===3?'← Mundo 2':'← Mundo 1';
+    w2btn.textContent='← Mundo '+(SAVE.world-1);
   }
+  const WORLD_TITLES={1:'⚔ Aetherion',2:'👑 El Reino Invertido',3:'🌀 El Vacío Eterno',4:'🕳 El Abismo Sin Nombre'};
   const titleEl=document.getElementById('map-world-title');
-  if(titleEl) titleEl.textContent=SAVE.world===3?'🕳 El Corazón del Vacío':SAVE.world===2?'🌀 El Vacío Eterno':'⚔ Aetherion';
+  if(titleEl) titleEl.textContent=WORLD_TITLES[SAVE.world]||WORLD_TITLES[1];
   const w1done=SAVE.beaten.filter(x=>x<=11).length;
-  const w2done=SAVE.beaten.filter(x=>x>=12&&x<=19).length;
-  const w3done=SAVE.beaten.filter(x=>x>=20&&x<=24).length;
-  document.getElementById('mprog').textContent=SAVE.world===3?(w3done+'/5 Espectros'+(SAVE.beaten.includes(25)?' · 🏆':'')):SAVE.world===2?(w2done+'/8 Mundo 2'):(w1done+'/12');
+  const w2done=SAVE.beaten.filter(x=>x>=26&&x<=33).length;
+  const w3done=SAVE.beaten.filter(x=>x>=12&&x<=19).length;
+  const w4done=SAVE.beaten.filter(x=>x>=20&&x<=24).length;
+  const progTxt={1:w1done+'/12',2:w2done+'/8 Mundo 2',3:w3done+'/8 Mundo 3',4:w4done+'/5 Heraldos'+(SAVE.beaten.includes(25)?' · 🏆':'')};
+  document.getElementById('mprog').textContent=progTxt[SAVE.world]||progTxt[1];
   document.getElementById('duel-popup').style.display='none';
   // Map image is landscape 3:2, we use W=540 H=360 to match
   const W=540, H=360;
@@ -918,19 +1034,29 @@ function renderMap(){
   // Region 2 (Fortaleza del Norte): Top-left sea castle / mountain fortress
   // Region 3 (La Ciudadela Oscura): Bottom-right island dark tower
   // Mundo 2: regiones del Vacío Eterno
-  const inWorld2=SAVE.world===2, inWorld3=SAVE.world===3;
-  const DUELISTS_ACTIVE=inWorld3?DUELISTS.filter(d=>d.world===3):inWorld2?DUELISTS.filter(d=>d.world===2):DUELISTS.filter(d=>!d.world);
-  const RMAP=inWorld3?[]:inWorld2?[
-    { stroke:'#9d4edd',label:{x:220,y:280},icon:'👤',name:'El Espejo\nRoto',      pins:[{x:185,y:240},{x:255,y:240}],reg:4},
-    { stroke:'#4895ef',label:{x:415,y:140},icon:'⛈️',name:'Cielos\nPartidos',     pins:[{x:388,y:95},{x:455,y:95}],  reg:5},
-    { stroke:'#e85d04',label:{x:100,y:115},icon:'🔥',name:'Mar\nNegro',           pins:[{x:68,y:72},{x:132,y:72}],   reg:6},
-    { stroke:'#ffffff',label:{x:435,y:315},icon:'🌀',name:'El\nOrigen',           pins:[{x:405,y:272},{x:468,y:272}],reg:7},
-  ]:[
-    { stroke:'#52b788',label:{x:220,y:280},icon:'🌾',name:'Tierras del\nComienzo',pins:[{x:185,y:240},{x:220,y:235},{x:255,y:240}],reg:0},
-    { stroke:'#c9930a',label:{x:415,y:140},icon:'🏰',name:'Castillo del\nMercader',pins:[{x:388,y:95},{x:422,y:88},{x:455,y:95}],reg:1},
-    { stroke:'#4895ef',label:{x:100,y:115},icon:'🗡',name:'Fortaleza\ndel Norte', pins:[{x:68,y:72},{x:100,y:65},{x:132,y:72}],reg:2},
-    { stroke:'#9d4edd',label:{x:435,y:315},icon:'💀',name:'La Ciudadela\nOscura', pins:[{x:405,y:272},{x:437,y:265},{x:468,y:272}],reg:3},
-  ];
+  const inWorld2=SAVE.world===2, inWorld3=SAVE.world===3, inWorld4=SAVE.world===4;
+  const DUELISTS_ACTIVE=inWorld4?DUELISTS.filter(d=>d.world===4):inWorld3?DUELISTS.filter(d=>d.world===3):inWorld2?DUELISTS.filter(d=>d.world===2):DUELISTS.filter(d=>!d.world);
+  const RMAP_BY_WORLD={
+    1:[
+      { stroke:'#52b788',label:{x:220,y:280},icon:'🌾',name:'Tierras del\nComienzo',pins:[{x:185,y:240},{x:220,y:235},{x:255,y:240}],reg:0},
+      { stroke:'#c9930a',label:{x:415,y:140},icon:'🏰',name:'Castillo del\nMercader',pins:[{x:388,y:95},{x:422,y:88},{x:455,y:95}],reg:1},
+      { stroke:'#4895ef',label:{x:100,y:115},icon:'🗡',name:'Fortaleza\ndel Norte', pins:[{x:68,y:72},{x:100,y:65},{x:132,y:72}],reg:2},
+      { stroke:'#9d4edd',label:{x:435,y:315},icon:'💀',name:'La Ciudadela\nOscura', pins:[{x:405,y:272},{x:437,y:265},{x:468,y:272}],reg:3},
+    ],
+    2:[
+      { stroke:'#e85d04',label:{x:220,y:280},icon:'👑',name:'Ecos de\nCristal',      pins:[{x:185,y:240},{x:255,y:240}],reg:10},
+      { stroke:'#4895ef',label:{x:415,y:140},icon:'🏯',name:'Bastión\nQuebrado',     pins:[{x:388,y:95},{x:455,y:95}],  reg:11},
+      { stroke:'#52b788',label:{x:100,y:115},icon:'⚔',name:'Vigía del\nOcaso',      pins:[{x:68,y:72},{x:132,y:72}],   reg:12},
+      { stroke:'#9d4edd',label:{x:435,y:315},icon:'🔮',name:'Trono\nInvertido',      pins:[{x:405,y:272},{x:468,y:272}],reg:13},
+    ],
+    3:[
+      { stroke:'#9d4edd',label:{x:220,y:280},icon:'👤',name:'El Espejo\nRoto',      pins:[{x:185,y:240},{x:255,y:240}],reg:4},
+      { stroke:'#4895ef',label:{x:415,y:140},icon:'⛈️',name:'Cielos\nPartidos',     pins:[{x:388,y:95},{x:455,y:95}],  reg:5},
+      { stroke:'#e85d04',label:{x:100,y:115},icon:'🔥',name:'Mar\nNegro',           pins:[{x:68,y:72},{x:132,y:72}],   reg:6},
+      { stroke:'#ffffff',label:{x:435,y:315},icon:'🌀',name:'El\nOrigen',           pins:[{x:405,y:272},{x:468,y:272}],reg:7},
+    ],
+  };
+  const RMAP=inWorld4?[]:(RMAP_BY_WORLD[SAVE.world]||RMAP_BY_WORLD[1]);
 
   // Clip paths for portraits
   let clips=DUELISTS.map(d=>`<clipPath id="pc${d.id}"><circle r="11"/></clipPath>`).join('');
@@ -941,16 +1067,23 @@ function renderMap(){
     <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,.8)"/></filter>
     <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <filter id="darkpin"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,.9)"/></filter>
+    <radialGradient id="castleGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
   </defs>
+  <style>@keyframes castle-glow-pulse{0%,100%{opacity:.55}50%{opacity:1}}</style>
   <!-- Fantasy map background image -->
-  <image href="${MAP_IMG}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+  <image href="${SAVE.world===2?MAP_IMG_W3:MAP_IMG}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
   <!-- Dark vignette overlay for depth -->
   <rect width="${W}" height="${H}" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="30"/>
   <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="none" stroke="rgba(255,209,102,0.15)" stroke-width="1.5" rx="8"/>
   `;
 
+  const REG_OFFSET={1:0,2:10,3:4};
   RMAP.forEach((reg,ri)=>{
-    const regId=inWorld2?ri+4:ri; // mundo 2 usa regiones 4-7
+    const regId=(REG_OFFSET[SAVE.world]||0)+ri;
     const ds=DUELISTS_ACTIVE.filter(d=>d.reg===regId);
     const prev=ri>0?DUELISTS_ACTIVE.filter(x=>x.reg===regId-1):[];
     const locked=ri>0&&!prev.every(x=>SAVE.beaten.includes(x.id));
@@ -965,9 +1098,12 @@ function renderMap(){
     const castleOpacity=locked?0.35:1;
     const castleOnClick=locked?'':(`openCastlePopup(${ri})`);
     // Draw castle SVG shape
-    const castleImg=CASTLE_IMG[(inWorld2?'w2_':'w1_')+ri];
+    const CASTLE_PREFIX={1:'w1_',2:'w3_',3:'w2_'};
+    const castleImg=CASTLE_IMG[(CASTLE_PREFIX[SAVE.world]||'w1_')+ri];
+    const inProgress=!locked&&!allBeaten;
     svg+=`<g transform="translate(${cx},${cy})" opacity="${castleOpacity}" ${locked?'':'style="cursor:pointer"'} onclick="${castleOnClick}">
       <ellipse cx="0" cy="16" rx="22" ry="5" fill="rgba(0,0,0,.45)"/>
+      ${inProgress?`<circle cx="0" cy="-5" r="32" fill="url(#castleGlow)" style="animation:castle-glow-pulse 2.4s ease-in-out infinite"/>`:''}
       <image href="${castleImg}" x="-27" y="-32" width="54" height="54"/>
       ${locked?`<text text-anchor="middle" y="2" font-size="13">🔒</text>`:''}
       ${allBeaten?`<circle cx="17" cy="-22" r="7" fill="rgba(5,20,10,.9)" stroke="#52b788" stroke-width="1.2"/><text x="17" y="-18.5" text-anchor="middle" font-size="9" fill="#52b788" font-weight="900">✓</text>`:''}
@@ -990,24 +1126,33 @@ function renderMap(){
       <text text-anchor="middle" y="-25" font-family="Georgia,serif" font-size="6" fill="rgba(224,170,255,.6)">Toca para entrar</text>
     </g>`;
   }
-  // ── AGUJERO NEGRO al vencer a El Origen ──
-  if(SAVE.world===2&&SAVE.beaten.includes(19)){
+  // ── PORTAL al Mundo 3 (El Reino Invertido) al vencer a El Origen ──
+  if(SAVE.world===2&&SAVE.beaten.includes(33)){
     const bx=270, by=185;
-    svg+=`<style>@keyframes bh-spin{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}@keyframes bh-pulse{0%,100%{opacity:.6}50%{opacity:1}}</style>`;
+    svg+=`<style>@keyframes bh-pulse{0%,100%{opacity:.6}50%{opacity:1}}</style>`;
     svg+=`<g transform="translate(${bx},${by})" onclick="enterWorld3()" style="cursor:pointer">
+      <image href="${VORTEX_IMG}" x="-36" y="-36" width="72" height="72" style="animation:bh-pulse 1.6s infinite;filter:hue-rotate(200deg)"/>
+      <text text-anchor="middle" y="-42" font-family="'Cinzel',serif" font-size="7.5" fill="#f4d35e" letter-spacing="0.5" style="text-shadow:0 0 8px rgba(244,211,94,.9)">Un reflejo del reino se abrió</text>
+      <text text-anchor="middle" y="48" font-family="Georgia,serif" font-size="6" fill="rgba(224,170,255,.7)">Toca para cruzar al Reino Invertido</text>
+    </g>`;
+  }
+  // ── AGUJERO NEGRO al vencer a El Rey Invertido (cierre del Mundo 3) ──
+  if(SAVE.world===3&&SAVE.beaten.includes(19)){
+    const bx=270, by=185;
+    svg+=`<style>@keyframes bh-pulse{0%,100%{opacity:.6}50%{opacity:1}}</style>`;
+    svg+=`<g transform="translate(${bx},${by})" onclick="enterWorld4()" style="cursor:pointer">
       <image href="${BLACKHOLE_IMG}" x="-36" y="-36" width="72" height="72" style="animation:bh-pulse 1.6s infinite"/>
       <text text-anchor="middle" y="-42" font-family="'Cinzel',serif" font-size="7.5" fill="#f4d35e" letter-spacing="0.5" style="text-shadow:0 0 8px rgba(244,211,94,.9)">Un Agujero Negro se abrió</text>
       <text text-anchor="middle" y="48" font-family="Georgia,serif" font-size="6" fill="rgba(224,170,255,.7)">Toca para cruzar el umbral</text>
     </g>`;
   }
-  // ── MUNDO 3: El Corazón del Vacío ──
-  if(SAVE.world===3){
-    const ds3=DUELISTS.filter(d=>d.world===3&&d.reg===8); // solo los 5 espectros orbitan
-    const done3=ds3.filter(d=>SAVE.beaten.includes(d.id)).length;
+  // ── MUNDO 4: El Abismo Sin Nombre (Heraldos Oscuros + jefe final) ──
+  if(SAVE.world===4){
+    const ds4=DUELISTS.filter(d=>d.world===4&&d.reg===8); // los 5 heraldos orbitan
+    const done4=ds4.filter(d=>SAVE.beaten.includes(d.id)).length;
     svg+=`<rect width="${W}" height="${H}" fill="rgba(0,0,10,0.82)"/>`;
     svg+=`<style>@keyframes bh-pulse{0%,100%{opacity:.6}50%{opacity:1}}</style>`;
-    // anillos de espectros derrotados
-    ds3.forEach((d,i)=>{
+    ds4.forEach((d,i)=>{
       const ang=(i/5)*Math.PI*2-Math.PI/2;
       const px=270+Math.cos(ang)*105, py=185+Math.sin(ang)*88;
       const beaten=SAVE.beaten.includes(d.id);
@@ -1015,19 +1160,18 @@ function renderMap(){
         <circle r="17.5" fill="none" stroke="${beaten?'#52b788':'#9d4edd'}" stroke-width="1.5"/>
         <image href="${TOKEN[d.id]||''}" x="-16" y="-16" width="32" height="32"/>
         ${beaten?`<circle cx="12" cy="-12" r="6" fill="rgba(5,20,10,.9)" stroke="#52b788" stroke-width="1"/><text x="12" y="-9" text-anchor="middle" font-size="8" fill="#52b788" font-weight="900">✓</text>`:''}
-        <text text-anchor="middle" y="30" font-family="'Cinzel',serif" font-size="5.5" fill="${beaten?'#52b788':'#c8b6e2'}">${d.name.replace('Espectro de la ','').replace('Espectro del ','').replace('El Espectro ','')}</text>
+        <text text-anchor="middle" y="30" font-family="'Cinzel',serif" font-size="5.5" fill="${beaten?'#52b788':'#c8b6e2'}">${d.name.replace('Heraldo de la ','').replace('Heraldo del ','').replace('El Heraldo ','')}</text>
       </g>`;
     });
-    const allSpectrals=[20,21,22,23,24].every(id=>SAVE.beaten.includes(id));
+    const allHeralds=[20,21,22,23,24].every(id=>SAVE.beaten.includes(id));
     const finalBeaten=SAVE.beaten.includes(25);
-    if(!allSpectrals){
+    if(!allHeralds){
       svg+=`<g transform="translate(270,185)" onclick="openCastlePopup(0)" style="cursor:pointer">
         <image href="${BLACKHOLE_IMG}" x="-45" y="-45" width="90" height="90" style="animation:bh-pulse 1.6s infinite"/>
-        <text text-anchor="middle" y="-52" font-family="'Cinzel Decorative',serif" font-size="10" fill="#f4d35e" style="text-shadow:0 0 10px rgba(244,211,94,.8)">Los Cinco Espectros</text>
-        <text text-anchor="middle" y="58" font-family="Georgia,serif" font-size="6.5" fill="#c8b6e2">${done3}/5 derrotados · Toca el agujero negro para desafiarlos</text>
+        <text text-anchor="middle" y="-52" font-family="'Cinzel Decorative',serif" font-size="10" fill="#f4d35e" style="text-shadow:0 0 10px rgba(244,211,94,.8)">Los Heraldos Oscuros</text>
+        <text text-anchor="middle" y="58" font-family="Georgia,serif" font-size="6.5" fill="#c8b6e2">${done4}/5 derrotados · Toca el agujero negro para desafiarlos</text>
       </g>`;
     }else{
-      // Los cinco cayeron: el enemigo final emerge del agujero
       svg+=`<g transform="translate(270,185)" onclick="castleConfirm(0,25)" style="cursor:pointer">
         <image href="${BLACKHOLE_IMG}" x="-48" y="-48" width="96" height="96" style="animation:bh-pulse 1.4s infinite"/>
         <circle r="26" fill="none" stroke="${finalBeaten?'#52b788':'#f4d35e'}" stroke-width="1.6" style="animation:bh-pulse 1.4s infinite"/>
@@ -1107,17 +1251,17 @@ function mapZoom(dir){
 })();
 
 function enterWorld2(){
-  // Cinemática de entrada al mundo 2
+  // Cinemática de entrada al mundo 2 (ahora: El Reino Invertido)
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:500;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:2rem;';
   ov.innerHTML=`
-    <div style="font-size:4rem;animation:vortex-pulse 1.5s infinite">🌀</div>
-    <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:#bf5fff;text-align:center;text-shadow:0 0 20px rgba(157,78,221,.8)">El Vacío Eterno</div>
+    <div style="font-size:4rem;animation:vortex-pulse 1.5s infinite">👑</div>
+    <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:#e85d04;text-align:center;text-shadow:0 0 20px rgba(232,93,4,.7)">El Reino Invertido</div>
     <div style="font-family:'Philosopher',serif;font-size:.82rem;color:#ccc;text-align:center;max-width:280px;line-height:1.7;">
       Has derrotado a Lord Malachar y atravesado el velo.<br>
-      <span style="color:#e0aaff">Aquí las reglas cambian. Los rivales son algo diferente.</span>
+      <span style="color:#e0aaff">Del otro lado espera un reflejo del reino: lo que Aetherion pudo haber sido, si hubiera perdido.</span>
     </div>
-    <button class="btn xs" style="border-color:#bf5fff;color:#e0aaff;margin-top:.5rem" onclick="this.closest('div').remove();SAVE.world=2;save();renderMap();">Entrar al Vacío →</button>
+    <button class="btn xs" style="border-color:#e85d04;color:#e85d04;margin-top:.5rem" onclick="this.closest('div').remove();SAVE.world=2;save();renderMap();">Cruzar el reflejo →</button>
     <button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="this.closest('div').remove()">← Volver al mapa</button>
   `;
   document.body.appendChild(ov);
@@ -1127,27 +1271,47 @@ function enterWorld3(){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:500;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:2rem;';
   ov.innerHTML=`
-    <div style="font-size:4rem;animation:vortex-pulse 1.5s infinite">🕳</div>
-    <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:#f4d35e;text-align:center;text-shadow:0 0 20px rgba(244,211,94,.7)">El Corazón del Vacío</div>
+    <div style="font-size:4rem;animation:vortex-pulse 1.5s infinite">🌀</div>
+    <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:#bf5fff;text-align:center;text-shadow:0 0 20px rgba(157,78,221,.8)">El Vacío Eterno</div>
     <div style="font-family:'Philosopher',serif;font-size:.82rem;color:#ccc;text-align:center;max-width:290px;line-height:1.7;">
-      Al caer El Origen, el tejido de la realidad se rasgó.<br>
-      Del otro lado esperan <span style="color:#e0aaff">los Cinco Espectros</span>: ecos de todo lo que existió antes del reino.<br>
+      Al caer El Rey Invertido, el reflejo mismo se rasgó.<br>
+      Del otro lado espera <span style="color:#e0aaff">el Vacío Eterno</span>: aquí las reglas cambian, y los rivales son algo diferente.
+    </div>
+    <button class="btn xs" style="border-color:#bf5fff;color:#e0aaff;margin-top:.5rem" onclick="this.closest('div').remove();SAVE.world=3;save();renderMap();">Entrar al Vacío →</button>
+    <button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="this.closest('div').remove()">← Volver al mapa</button>
+  `;
+  document.body.appendChild(ov);
+}
+function enterWorld4(){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:500;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:2rem;';
+  ov.innerHTML=`
+    <div style="font-size:4rem;animation:vortex-pulse 1.5s infinite">🕳</div>
+    <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:#f4d35e;text-align:center;text-shadow:0 0 20px rgba(244,211,94,.7)">El Abismo Sin Nombre</div>
+    <div style="font-family:'Philosopher',serif;font-size:.82rem;color:#ccc;text-align:center;max-width:290px;line-height:1.7;">
+      Al caer El Rey Invertido, hasta el reflejo se quebró del todo.<br>
+      Del otro lado esperan <span style="color:#e0aaff">los Cinco Heraldos Oscuros</span>: ecos de todo lo que existió antes del reino.<br>
       <span style="color:#f4a261">Cada duelo aquí cuesta ${ENERGY.spectral} ⚡.</span>
     </div>
-    <button class="btn xs" style="border-color:#f4d35e;color:#f4d35e;margin-top:.5rem" onclick="this.closest('div').remove();SAVE.world=3;save();renderMap();">Cruzar el umbral →</button>
+    <button class="btn xs" style="border-color:#f4d35e;color:#f4d35e;margin-top:.5rem" onclick="this.closest('div').remove();SAVE.world=4;save();renderMap();">Cruzar el umbral →</button>
     <button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="this.closest('div').remove()">← Volver al mapa</button>
   `;
   document.body.appendChild(ov);
 }
 
 function openCastlePopup(ri){
-  const inWorld2=SAVE.world===2, inWorld3=SAVE.world===3;
-  const DUELISTS_ACTIVE=inWorld3?DUELISTS.filter(d=>d.world===3):inWorld2?DUELISTS.filter(d=>d.world===2):DUELISTS.filter(d=>!d.world);
-  const RMAP_NAMES=inWorld3?['Los Cinco Espectros']:inWorld2?
-    ['El Espejo Roto','Cielos Partidos','Mar Negro','El Origen']:
-    ['Tierras del Comienzo','Castillo del Mercader','Fortaleza del Norte','La Ciudadela Oscura'];
-  const regName=RMAP_NAMES[ri]||'Región';
-  const ds=DUELISTS_ACTIVE.filter(d=>d.reg===(inWorld3?8:inWorld2?ri+4:ri));
+  const inWorld4=SAVE.world===4;
+  const DUELISTS_ACTIVE=inWorld4?DUELISTS.filter(d=>d.world===4):DUELISTS.filter(d=>d.world===SAVE.world||(SAVE.world===1&&!d.world));
+  const RMAP_NAMES_BY_WORLD={
+    1:['Tierras del Comienzo','Castillo del Mercader','Fortaleza del Norte','La Ciudadela Oscura'],
+    2:['Ecos de Cristal','Bastión Quebrado','Vigía del Ocaso','Trono Invertido'],
+    3:['El Espejo Roto','Cielos Partidos','Mar Negro','El Origen'],
+    4:['Los Heraldos Oscuros'],
+  };
+  const regName=(RMAP_NAMES_BY_WORLD[SAVE.world]||RMAP_NAMES_BY_WORLD[1])[ri]||'Región';
+  const REG_OFFSET={1:0,2:10,3:4,4:8};
+  const regId=(REG_OFFSET[SAVE.world]||0)+(inWorld4?0:ri);
+  const ds=DUELISTS_ACTIVE.filter(d=>d.reg===regId);
   if(!ds.length) return;
 
   const ov=document.createElement('div');
@@ -1159,7 +1323,8 @@ function openCastlePopup(ri){
   // Header
   const title=document.createElement('div');
   title.style.cssText='font-family:"Cinzel",serif;font-size:.9rem;color:var(--gold);text-align:center;margin-bottom:.8rem;letter-spacing:.1em;';
-  title.textContent=(inWorld3?'🕳 ':'🏰 ')+regName;
+  const WORLD_ICON={1:'🏰',2:'🏰',3:'🏯',4:'🕳'};
+  title.textContent=(WORLD_ICON[SAVE.world]||'🏰')+' '+regName;
   box.appendChild(title);
 
   // Duelists list
@@ -1215,7 +1380,7 @@ function castleConfirm(ri,did){
   const d=DUELISTS.find(x=>x.id===did);
   if(!d)return;
   const beaten=SAVE.beaten.includes(d.id);
-  const cost=d.world===3?ENERGY.spectral:ENERGY.duel;
+  const cost=d.world===4?ENERGY.spectral:ENERGY.duel;
   const stars=Array(5).fill(0).map((_,i)=>'<span style="color:'+(i<d.diff?'#FFD166':'rgba(255,255,255,.15)')+'">★</span>').join('');
   const fc=FC[d.f]||'var(--gold)';
   const ov=document.createElement('div');
@@ -1262,7 +1427,7 @@ function openDk(did){
   const tut=did===0&&!SAVE.beaten.includes(0);
   dkSel=(!tut&&Array.isArray(SAVE.lastDeck))?[...new Set(SAVE.lastDeck)].filter(cid=>SAVE.coll.includes(cid)&&CARDS.find(x=>x.id===cid)).slice(0,5):[];
   const _d=DUELISTS.find(x=>x.id===did);
-  _nextDuelCost=(_d&&_d.world===3)?ENERGY.spectral:ENERGY.duel;
+  _nextDuelCost=(_d&&_d.world===4)?ENERGY.spectral:ENERGY.duel;
   const _bd=document.getElementById('btnD');
   if(_bd)_bd.innerHTML='⚔ ¡Duelo! <span style="font-size:.6rem;opacity:.85">(−'+_nextDuelCost+' ⚡)</span>';
   if(did===0&&!SAVE.beaten.includes(0)){
@@ -1531,6 +1696,61 @@ function doSell(cid,val){
   renderCollectionScreen();
 }
 
+
+// ── SOBRES DE CARTAS ─────────────────────────────────────────
+// Probabilidad por rareza (peso relativo, no porcentaje directo).
+const BOOSTER_ODDS={1:45,2:32,3:14,4:6,5:3};
+const BOOSTER_PRICE=50; // ✨ PM por sobre de 3 cartas
+function boosterRoll(){
+  const total=Object.values(BOOSTER_ODDS).reduce((a,b)=>a+b,0);
+  let r=Math.random()*total;
+  for(const st of [1,2,3,4,5]){
+    r-=BOOSTER_ODDS[st];
+    if(r<=0){
+      const pool=CARDS.filter(c=>c.st===st);
+      return pool[Math.floor(Math.random()*pool.length)];
+    }
+  }
+  return CARDS[0];
+}
+function buyBooster(){
+  if((SAVE.mp||0)<BOOSTER_PRICE){
+    showToastMsg('✨ Te faltan PM para un sobre. Vendé cartas repetidas para conseguir más.');
+    return;
+  }
+  SAVE.mp-=BOOSTER_PRICE;
+  const cards=[boosterRoll(),boosterRoll(),boosterRoll()];
+  cards.forEach(c=>SAVE.coll.push(c.id));
+  save();
+  showBoosterReveal(cards);
+  checkAvatarUnlocks();
+}
+function showBoosterReveal(cards){
+  const ov=document.createElement('div');
+  ov.id='booster-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:490;background:rgba(0,0,5,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem;gap:1rem;';
+  ov.innerHTML='<div style="font-family:\'Cinzel Decorative\',serif;font-size:1rem;color:#e0aaff;text-shadow:0 0 14px rgba(224,170,255,.5)">📦 ¡Sobre abierto!</div>'
+    +'<div id="booster-cards" style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;max-width:400px;"></div>'
+    +'<button class="btn sm" style="border-color:#bf5fff;color:#e0aaff" onclick="document.getElementById(\'booster-ov\').remove();renderCollectionScreen();">Continuar</button>';
+  document.body.appendChild(ov);
+  const wrap=document.getElementById('booster-cards');
+  cards.forEach((c,i)=>{
+    const back=document.createElement('div');
+    back.className='hc';
+    back.style.cssText='width:100px;cursor:pointer;perspective:600px;';
+    back.innerHTML='<div class="ehc-back" style="position:absolute;inset:0;background-image:url(\''+CARD_BACK+'\');background-size:100% 100%;border-radius:6px;"></div>';
+    back.dataset.flipped='0';
+    back.onclick=function(){
+      if(this.dataset.flipped==='1')return;
+      this.dataset.flipped='1';
+      this.innerHTML=cardFace(c);
+      if(c.st>=4){ this.style.boxShadow='0 0 18px '+(FC[c.f]||'#e0aaff'); }
+    };
+    setTimeout(()=>back.click(), 400+i*350); // se revelan solas, en cadena
+    wrap.appendChild(back);
+  });
+}
+
 function renderShop(g){
   g.className='shop-grid';
   const headerDiv=document.createElement('div');
@@ -1549,6 +1769,17 @@ function renderShop(g){
     +'</div>'
     +(full?'<div style="text-align:center;font-size:.62rem;color:var(--td);margin-top:.4rem">Energía al máximo</div>':'');
   g.appendChild(eWrap);
+
+  // ── Sobres de cartas ──
+  const bWrap=document.createElement('div');
+  bWrap.style.cssText='grid-column:1/-1;background:rgba(191,95,255,.06);border:1px solid rgba(191,95,255,.3);border-radius:10px;padding:.7rem;margin-bottom:.7rem;';
+  const canBuyBooster=(SAVE.mp||0)>=BOOSTER_PRICE;
+  bWrap.innerHTML='<div style="font-family:Cinzel,serif;font-size:.72rem;color:#e0aaff;text-align:center;margin-bottom:.35rem;letter-spacing:.08em">📦 SOBRE DE 3 CARTAS</div>'
+    +'<div style="text-align:center;font-family:Philosopher,serif;font-size:.62rem;color:var(--td);margin-bottom:.5rem">Cartas al azar de todo el juego · más chance de ★1-2, algo de suerte para ★4-5</div>'
+    +'<div style="display:flex;justify-content:center">'
+    +'<button class="btn xs" style="border-color:#bf5fff;color:#e0aaff" '+(canBuyBooster?'':'disabled')+' onclick="buyBooster();switchCollTab(\'shop\')">📦 Abrir sobre — ✨ '+BOOSTER_PRICE+' PM</button>'
+    +'</div>';
+  g.appendChild(bWrap);
 
   SHOP_CARDS.sort((a,b)=>a.cost-b.cost).forEach(c=>{
     const owned=SAVE.coll.includes(c.id);
@@ -1704,7 +1935,7 @@ function startDuel(){
   const d=DUELISTS.find(x=>x.id===pendDid);
   // ── Cobro de energía ──
   SAVE.lastDeck=[...dkSel]; save(); // recordar el equipo elegido
-  const _cost=(_nextDuelCost==null)?((d&&d.world===3)?ENERGY.spectral:ENERGY.duel):_nextDuelCost;
+  const _cost=(_nextDuelCost==null)?((d&&d.world===4)?ENERGY.spectral:ENERGY.duel):_nextDuelCost;
   _nextDuelCost=null;
   if(_cost>0){
     if((SAVE.energy||0)<_cost){ showNoEnergy(_cost); return; }
@@ -1728,19 +1959,22 @@ function startDuel(){
     indices.forEach((i,j)=>{ ehBase[i]=shuffledPool[j].id; });
   }
   G={board:Array(9).fill(null),cellEl,ph:[...dkSel],eh:ehBase,sel:null,turn:'player',over:false,ps:5,es:5,did:pendDid};
-  document.getElementById('mpLeaveBtn').style.display='none';
   document.getElementById('elabel').textContent=d.emoji+' '+d.name;
   document.getElementById('dbanner').innerHTML=
-    '<div class="dbanner"><div class="dbside">'
+    '<div class="dbanner">'
+    +'<button class="duel-action-btn" id="muteBtn" onclick="toggleMute()" title="Música" style="margin-right:.6rem"><img class="ui-ic" data-ic="icon_soundon" src="'+UI_ICON.icon_soundon+'"></button>'
+    +'<div class="dbside">'
     +'<div class="dbport" style="border-color:var(--pc)"><img src="'+PORT['tomas']+'" alt="Tú"></div>'
     +'<div class="dbname" style="color:var(--pc)">Tú</div></div>'
     +'<div class="dbvs">VS</div>'
     +'<div class="dbside" style="flex-direction:row-reverse">'
     +'<div class="dbport" style="border-color:var(--ec)"><img src="'+(TOKEN[d.id]||PORT[d.port])+'" alt="'+d.name+'"></div>'
-    +'<div class="dbname" style="color:var(--ec)">'+d.name+'</div></div></div>';
+    +'<div class="dbname" style="color:var(--ec)">'+d.name+'</div></div>'
+    +'<button class="duel-action-btn" id="surrenderBtn" onclick="confirmSurrender()" title="Rendirse" style="margin-left:.6rem">🏳</button><button class="duel-action-btn" id="mpLeaveBtn" onclick="mpConfirmLeave()" title="Salir del duelo online" style="display:none;margin-left:.35rem">🚪</button>'
+    +'</div>';
   document.getElementById('elemlegend2').innerHTML=legendHTML();
   showS('game-screen');
-  const _musicMode=(d&&d.world===3)?'void':'normal';
+  const _musicMode=(d&&d.world===4)?'void':'normal';
   startAmbient(_musicMode);updateMuteBtn();
   clearLog();addLog('⚔ Duelo contra '+d.name+' — ¡Que comience!','ls');
   chatReset();
@@ -1815,7 +2049,7 @@ function continueNext(){
 }
 function showCinematic(regionIdx){
   const c=CINE_DATA[regionIdx];if(!c)return;showS('cinematic-screen');
-  document.getElementById('cineImg').src=CINE_IMG[c.img];
+  document.getElementById('cineImg').src=c.art?ART[c.art]:CINE_IMG[c.img];
   document.getElementById('cineTitle').textContent=c.title;
   document.getElementById('cineText').textContent=c.text;
   if(!SAVE.cineSeen.includes(regionIdx)){SAVE.cineSeen.push(regionIdx);save();}
@@ -1847,7 +2081,7 @@ function renderBoard(){
         cell.addEventListener('click',()=>placeCard(i));
       }else{cell.innerHTML='<div class="hint">·</div>';}
       if(G.cellEl[i]){
-        cell.innerHTML+='<div class="cell-elem" style="color:'+FC[G.cellEl[i]]+'">'+ELEM_ICON[G.cellEl[i]]+'</div>';
+        cell.innerHTML+='<div class="cell-elem" style="color:'+FC[G.cellEl[i]]+'">'+elemIcon(G.cellEl[i],52)+'</div>';
       }
     }
     gr.appendChild(cell);
@@ -1870,7 +2104,7 @@ function buildBC(c,bc){
   else if(bc.elBonus===-1) cls+=' epen';
   let extra='';
   if(bc.cellElAtPlacement){
-    extra='<div class="cv-terrain">'+ELEM_ICON[bc.cellElAtPlacement]+'</div>';
+    extra='<div class="cv-terrain">'+elemIcon(bc.cellElAtPlacement)+'</div>';
   }
   return '<div class="'+cls+'">'+cardFace(c,bc.stats,bc.elBonus)+extra+'</div>';
 }
@@ -1924,7 +2158,7 @@ function duelZoom(ci,hi){
     ownerTag=bc.o===0?'<span style="color:var(--pc)">◉ En tu poder</span>':'<span style="color:var(--ec)">◉ Del enemigo</span>';
     if(bc.cellElAtPlacement){
       const same=c.f===bc.cellElAtPlacement;
-      terrainNote='Casilla '+ELEM_ICON[bc.cellElAtPlacement]+' → '+(elBonus>0?'<span style="color:#52b788">+1 a todos sus valores</span>':elBonus<0?'<span style="color:#e74c3c">−1 a todos sus valores</span>':'sin efecto');
+      terrainNote='Casilla '+elemIcon(bc.cellElAtPlacement,38)+' → '+(elBonus>0?'<span style="color:#52b788">+1 a todos sus valores</span>':elBonus<0?'<span style="color:#e74c3c">−1 a todos sus valores</span>':'sin efecto');
       void same;
     }
   }else{
@@ -1964,6 +2198,7 @@ function duelZoom(ci,hi){
 function effectiveStats(card, ci){
   const cellEl=G.cellEl[ci];
   if(!cellEl) return {stats:[...card.stats],elBonus:0,cellEl:null};
+  if(card.neutral) return {stats:[...card.stats],elBonus:0,cellEl}; // inmune al terreno: no gana ni pierde
   if(cellEl===card.f) return {stats:card.stats.map(v=>Math.min(10,v+1)),elBonus:1,cellEl};
   return {stats:card.stats.map(v=>Math.max(0,v-1)),elBonus:-1,cellEl};
 }
@@ -2077,7 +2312,8 @@ function showResult(win,draw,p,e,capturedCards,wasTutorial){
     :draw?'Las fuerzas están equilibradas.'
     :(d?(d.defeat?'"'+d.name+'" dice: "'+d.defeat+'"':'"'+d.name+'" dice: "Vuelve cuando seas digno."'):"Debes intentarlo de nuevo.");
   if(win&&capturedCards.length===0 && !(d&&d.id===0)) sub+=' No capturaste ninguna carta enemiga esta vez.';
-  if(win&&d&&d.id===24) sub='El último Espectro se disuelve... pero el agujero negro late con más fuerza que nunca. Algo antiguo abre los ojos en el centro del Vacío. 🕳';
+  if(win&&d&&d.id===24) sub='El último Heraldo Oscuro se disuelve... pero el agujero negro late con más fuerza que nunca. Algo antiguo abre los ojos en el centro del Abismo. 🕳';
+  if(win&&d&&d.id===33) sub='El Rey Invertido se astilla como el cristal que gobernaba. El reflejo se rasga por completo, y detrás de él se abre un vacío que no tiene fondo. 🌀';
   if(win&&d&&d.id===25) sub='El Vacío Encarnado se apaga como una vela. Aetherion, el Vacío Eterno y todo lo que existió antes quedan en paz. Tu nombre es leyenda. 🏆 ¡JUEGO COMPLETADO!';
   if(G.perfectWin) sub='⭐ ¡VICTORIA PERFECTA! Convertiste todas las cartas enemigas: te quedás con TODAS como botín. '+sub;
   if(win&&G.energyGain) sub+=' Recuperás +'+G.energyGain+' ⚡.';
@@ -2096,6 +2332,10 @@ function showResult(win,draw,p,e,capturedCards,wasTutorial){
   document.getElementById('btnMapa').style.display=G.online?'none':'';
   document.getElementById('btnContinue').style.display=(!G.online&&showCont)?'':'none';
   document.getElementById('btnMpExit').style.display=G.online?'':'none';
+  const tradeBtn=document.getElementById('btnMpTrade');
+  if(tradeBtn) tradeBtn.style.display=(G.online&&MP.conn&&MP.conn.open)?'':'none';
+  const rematchBtn=document.getElementById('btnMpRematch');
+  if(rematchBtn) rematchBtn.style.display=(G.online&&MP.conn&&MP.conn.open)?'':'none';
   stopAmbient();
   document.getElementById('resov').classList.add('active');
 }
@@ -2411,6 +2651,11 @@ function chatSend(){
   // Player message
   chatMsg('player', text, '', 'Vos');
   inp.value = '';
+  // Online: el mensaje viaja de verdad al rival real, sin respuesta simulada
+  if(G && G.online){
+    mpSend({t:'chat', text});
+    return;
+  }
   // Enemy response after delay (random from 'play' pool as generic reaction)
   const d = DUELISTS.find(x=>x.id===G?.did);
   if(d){
@@ -2524,7 +2769,7 @@ function addLog(msg,cls){const l=document.getElementById('log');const d=document
 
 // ── TOOLTIP ───────────────────────────────────────────────────
 const ttEl=document.getElementById('tt');
-function tip(e,c){document.getElementById('ttn').textContent=c.name;document.getElementById('ttf').innerHTML='<span style="color:'+FC[c.f]+'">'+ELEM_ICON[c.f]+' '+ELEM_NAME[c.f].toUpperCase()+' · '+c.st+'★</span>';const s=c.stats;document.getElementById('tts').innerHTML='<span>↑'+fmtN(s[0])+'</span><span>→'+fmtN(s[1])+'</span><span>↓'+fmtN(s[2])+'</span><span>←'+fmtN(s[3])+'</span>';document.getElementById('ttl').textContent=c.lore;ttEl.classList.add('show');tipMv(e);}
+function tip(e,c){document.getElementById('ttn').textContent=c.name;document.getElementById('ttf').innerHTML='<span style="color:'+FC[c.f]+'">'+elemIcon(c.f,34)+' '+ELEM_NAME[c.f].toUpperCase()+' · '+c.st+'★</span>';const s=c.stats;document.getElementById('tts').innerHTML='<span>↑'+fmtN(s[0])+'</span><span>→'+fmtN(s[1])+'</span><span>↓'+fmtN(s[2])+'</span><span>←'+fmtN(s[3])+'</span>';document.getElementById('ttl').textContent=c.lore;ttEl.classList.add('show');tipMv(e);}
 function tipOff(){ttEl.classList.remove('show');}
 function tipMv(e){
   if(window.matchMedia('(pointer:coarse)').matches){ttEl.classList.remove('show');return;}
@@ -2549,6 +2794,94 @@ function mpRoomCode(){
   let s=''; for(let i=0;i<5;i++) s+=ch[Math.floor(Math.random()*ch.length)];
   return s;
 }
+
+// ── PANTALLA DE REGLAS (visual, sin jugar el tutorial) ──────────
+function showRules(){
+  const ov=document.createElement('div');
+  ov.id='rules-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:490;background:rgba(0,0,5,.96);display:flex;flex-direction:column;align-items:center;padding:1rem;overflow:hidden;';
+
+  const demo1=CARDS.find(c=>c.id==='chispa');   // ★1 storm, valores parejos
+  const demo2=CARDS.find(c=>c.id==='lanzero');  // ★1 fire
+
+  const miniCard=(c,extra)=>'<div class="hc" style="width:66px;position:relative;'+ (extra||'') +'">'+cardFace(c)+'</div>';
+
+  ov.innerHTML='<div style="width:100%;max-width:440px;height:100%;display:flex;flex-direction:column;overflow-y:auto;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">'
+    +'<div style="width:60px"></div>'
+    +'<div style="font-family:\'Cinzel Decorative\',serif;font-size:.95rem;color:#7fd8ff;text-align:center;flex:1">📜 Reglas del Juego</div>'
+    +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="document.getElementById(\'rules-ov\').remove()">✕</button>'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:.7rem">'
+    +'<strong>🎯 Objetivo</strong><br>El tablero tiene 9 casillas (3×3). Ganás si al llenarse tenés más cartas que tu rival — sumando las que están en el tablero más las que te quedaron en la mano.'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:.7rem">'
+    +'<strong>🃏 Las 4 cartas de cada mano</strong><br>Cada jugador arma un equipo de 5 cartas antes del duelo. Por turnos, cada uno coloca UNA carta en una casilla vacía.'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:.7rem">'
+    +'<strong>⚔ Cómo capturar</strong><br>Cada carta tiene 4 valores: arriba, derecha, abajo, izquierda. Al colocar una carta, se compara cada valor contra el valor OPUESTO de la carta rival adyacente. Si el tuyo es mayor, la capturás y pasa a ser tuya.'
+    +'<div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.6rem">'
+    +miniCard(demo1)
+    +'<div style="font-family:Cinzel,serif;color:var(--gold);font-size:1.1rem">→</div>'
+    +miniCard(demo2,'outline:2px solid #e85d04;')
+    +'</div>'
+    +'<div style="text-align:center;font-size:.62rem;color:var(--td);margin-top:.35rem">Si el valor derecho de tu carta supera el valor izquierdo de la carta rival, la capturás.</div>'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:.7rem">'
+    +'<strong>🌋 Casillas con elemento</strong><br>Algunas casillas del tablero tienen un elemento (🔥⚡🌿🌑). Si el elemento de tu carta coincide, sus 4 valores suben +1 mientras esté ahí. Si no coincide, bajan −1.'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:.7rem">'
+    +'<strong>⭐ Rareza</strong><br>Las cartas van de ★1 (más débiles) a ★5 legendarias (las más fuertes). A mayor rareza, valores más altos en general — pero incluso una ★1 bien colocada puede capturar a una ★5.'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:.7rem">'
+    +'<strong>🏆 Victoria Perfecta</strong><br>Si al terminar el duelo convertiste TODAS las cartas que jugó tu rival, te quedás con todas como botín — no hay que elegir solo una.'
+    +'</div>'
+
+    +'<div class="rules-box" style="margin-bottom:1rem">'
+    +'<strong>⚡ Energía</strong><br>Cada duelo cuesta energía. Se recupera solo con el tiempo, ganando duelos, o comprándola en la tienda con ✨ PM.'
+    +'</div>'
+
+    +'<button class="btn sm" style="border-color:#7fd8ff;color:#7fd8ff;margin-bottom:1rem" onclick="document.getElementById(\'rules-ov\').remove()">Entendido</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+}
+
+
+// ── RENDICIÓN: termina el duelo antes de tiempo como derrota ─────────
+// Funciona igual en campaña, Partida Rápida y online (reusa showResult()
+// directamente, sin pasar por gameOver() que exige el tablero lleno).
+function confirmSurrender(){
+  if(!G || G.over) return;
+  const ov=document.createElement('div');
+  ov.className='sell-confirm';
+  ov.innerHTML='<div class="sell-box"><h3>🏳 ¿Rendirte?</h3>'
+    +'<p>'+(G.online?'Tu rival ganará el duelo y vos sumarás una derrota.':'El duelo termina como derrota. No se otorgan recompensas.')+'</p>'
+    +'<div class="sell-actions">'
+    +'<button class="btn xs" onclick="doSurrender();this.closest(\'.sell-confirm\').remove()">Sí, rendirme</button>'
+    +'<button class="btn xs" style="border-color:rgba(255,255,255,.2);color:var(--td)" onclick="this.closest(\'.sell-confirm\').remove()">Seguir jugando</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+}
+function doSurrender(){
+  if(!G || G.over) return;
+  if(G.online) mpSend({t:'surrender'});
+  const p=G.ps||0, e=G.es||0;
+  G.over=true; G.perfectWin=false; G.energyGain=0; G.pendingCine=null;
+  if(G.online){
+    SAVE.stats=SAVE.stats||{duelsWon:0,qmWins:0,mpGames:0};
+    SAVE.stats.mpGames=(SAVE.stats.mpGames||0)+1;
+    save();
+  }
+  render();
+  setTimeout(()=>showResult(false,false,p,e,[],false),400);
+}
+
 function mpOpenLobby(){
   if(typeof Peer==='undefined'){
     showToastMsg('⚠ No se pudo cargar el módulo online. Revisá tu conexión a internet e intentá de nuevo.');
@@ -2625,8 +2958,21 @@ function mpConnFail(msg){
 function mpWireConn(){
   MP.conn.on('data',d=>mpOnData(d));
   MP.conn.on('close',()=>{ if(!G.over) mpOnDisconnect(); });
-  mpSetBody('<div style="text-align:center;font-family:Philosopher,serif;font-size:.75rem;color:#52b788">✓ ¡Conectado! Elegí tu equipo…</div>');
-  setTimeout(()=>mpOpenDeckPicker(),400);
+  mpSetBody('<div style="text-align:center;font-family:Philosopher,serif;font-size:.75rem;color:#52b788">✓ ¡Conectado!</div>');
+  setTimeout(()=>mpShowConnectedMenu(),400);
+}
+function mpShowConnectedMenu(){
+  ['mp-lobby-ov','mp-deck-ov','mp-trade-ov'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
+  const ov=document.createElement('div');
+  ov.id='mp-menu-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.94);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.4rem;gap:1rem;';
+  ov.innerHTML='<div style="font-family:\'Cinzel Decorative\',serif;font-size:1rem;color:#52b788;text-shadow:0 0 12px rgba(82,183,136,.5)">✓ Conectado con tu rival</div>'
+    +'<div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:.7rem;">'
+    +'<button class="btn sm" style="border-color:#7fd8ff;color:#7fd8ff" onclick="mpOpenDeckPicker()">⚔ Jugar un duelo</button>'
+    +'<button class="btn sm" style="border-color:#e0aaff;color:#e0aaff" onclick="mpOpenTrade()">🔄 Intercambiar cartas</button>'
+    +'<button class="btn xs" style="border-color:var(--td);color:var(--td);margin-top:.3rem" onclick="mpLeaveDeckPicker()">✕ Salir de la sala</button>'
+    +'</div>';
+  document.body.appendChild(ov);
 }
 function mpSend(msg){ if(MP.conn&&MP.conn.open) MP.conn.send(msg); }
 
@@ -2638,7 +2984,7 @@ function mpOpenDeckPicker(){
   p.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.95);display:flex;flex-direction:column;align-items:center;padding:1rem;overflow:hidden;';
   p.innerHTML='<div style="width:100%;max-width:420px;height:100%;display:flex;flex-direction:column;">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">'
-    +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="mpLeaveDeckPicker()">← Cancelar</button>'
+    +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="mpShowConnectedMenu()">← Volver</button>'
     +'<div style="font-family:\'Cinzel Decorative\',serif;font-size:.85rem;color:#7fd8ff;text-align:center;flex:1">🌐 Elegí tus 5 cartas</div>'
     +'<div style="width:64px"></div>'
     +'</div>'
@@ -2720,6 +3066,61 @@ function mpOnData(msg){
     mpReceiveMove(msg.ci,msg.cid);
   }else if(msg.t==='bye'){
     mpOnDisconnect(true);
+  }else if(msg.t==='chat'){
+    chatMsg('enemy', msg.text, MP.oppTok||'', 'Rival');
+  }else if(msg.t==='trade_hello'){
+    const yaActivo=MPTRADE.active;
+    MPTRADE.theirColl=msg.coll;
+    if(!yaActivo){
+      MPTRADE.active=true;
+      mpSend({t:'trade_hello',coll:SAVE.coll});
+      mpOpenTrade();
+    }else{
+      mpRenderTrade();
+    }
+  }else if(msg.t==='trade_offer'){
+    MPTRADE.incoming={give:msg.give,want:msg.want};
+    mpRenderTrade();
+  }else if(msg.t==='trade_accept'){
+    if(MPTRADE.pending==='sent'){
+      const idx=SAVE.coll.indexOf(MPTRADE.myOffer);
+      if(idx>-1) SAVE.coll.splice(idx,1);
+      SAVE.coll.push(MPTRADE.theirWant);
+      save();checkAvatarUnlocks();
+      const got=CARDS.find(c=>c.id===MPTRADE.theirWant);
+      showToastMsg('🔄 ¡Tu rival aceptó! Recibiste '+(got?got.name:'una carta')+'.');
+      MPTRADE.myOffer=null;MPTRADE.theirWant=null;MPTRADE.pending=null;
+      mpRenderTrade();
+    }
+  }else if(msg.t==='trade_reject'){
+    if(MPTRADE.pending==='sent'){
+      showToastMsg('Tu rival rechazó la propuesta de intercambio.');
+      MPTRADE.pending=null;
+      mpRenderTrade();
+    }
+  }else if(msg.t==='surrender'){
+    if(G && G.online && !G.over){
+      const p=G.ps||0, e=G.es||0;
+      G.over=true; G.perfectWin=false; G.pendingCine=null;
+      SAVE.stats=SAVE.stats||{duelsWon:0,qmWins:0,mpGames:0};
+      SAVE.stats.mpGames=(SAVE.stats.mpGames||0)+1;
+      G.energyGain=ENERGY.win; gainEnergy(ENERGY.win);
+      save();
+      showToastMsg('🏳 Tu rival se rindió.');
+      render();
+      setTimeout(()=>showResult(true,false,p,e,[],false),400);
+    }
+  }else if(msg.t==='rematch'){
+    if(!document.getElementById('mp-deck-ov')){
+      document.getElementById('resov').classList.remove('active');
+      MP.myDeck=null; MP.oppDeck=null; MP.deckSent=false; MP.oppReady=false;
+      mpOpenDeckPicker();
+    }
+  }else if(msg.t==='trade_bye'){
+    const tov=document.getElementById('mp-trade-ov'); if(tov)tov.remove();
+    MPTRADE.active=false;
+    showToastMsg('Tu rival salió del intercambio.');
+    mpShowConnectedMenu();
   }
 }
 function mpBeginDuel(){
@@ -2730,13 +3131,17 @@ function mpBeginDuel(){
   document.getElementById('elabel').textContent='🌐 Duelo en línea';
   const myTok=(AVATAR_IMG&&AVATAR_IMG[SAVE.avatar])||AVATAR_IMG.tomas;
   document.getElementById('dbanner').innerHTML=
-    '<div class="dbanner"><div class="dbside">'
+    '<div class="dbanner">'
+    +'<button class="duel-action-btn" id="muteBtn" onclick="toggleMute()" title="Música" style="margin-right:.6rem"><img class="ui-ic" data-ic="icon_soundon" src="'+UI_ICON.icon_soundon+'"></button>'
+    +'<div class="dbside">'
     +'<div class="dbport" style="border-color:var(--pc)"><img src="'+myTok+'" alt="Tú"></div>'
     +'<div class="dbname" style="color:var(--pc)">Tú</div></div>'
     +'<div class="dbvs">VS</div>'
     +'<div class="dbside" style="flex-direction:row-reverse">'
     +'<div class="dbport" style="border-color:var(--ec)"><img src="'+(MP.oppTok||TOKEN.unknown)+'" alt="Rival"></div>'
-    +'<div class="dbname" style="color:var(--ec)">Rival</div></div></div>';
+    +'<div class="dbname" style="color:var(--ec)">Rival</div></div>'
+    +'<button class="duel-action-btn" id="surrenderBtn" onclick="confirmSurrender()" title="Rendirse" style="margin-left:.6rem">🏳</button><button class="duel-action-btn" id="mpLeaveBtn" onclick="mpConfirmLeave()" title="Salir del duelo online" style="display:none;margin-left:.35rem">🚪</button>'
+    +'</div>';
   document.getElementById('elemlegend2').innerHTML=legendHTML();
   showS('game-screen');
   document.getElementById('mpLeaveBtn').style.display='';
@@ -2796,6 +3201,8 @@ function mpOnDisconnect(silent){
     document.getElementById('btnMapa').style.display='none';
     document.getElementById('btnContinue').style.display='none';
     document.getElementById('btnMpExit').style.display='';
+    const tb=document.getElementById('btnMpTrade'); if(tb)tb.style.display='none';
+    const rb=document.getElementById('btnMpRematch'); if(rb)rb.style.display='none';
     stopAmbient();
     document.getElementById('resov').classList.add('active');
     mpTeardown();
@@ -2803,6 +3210,8 @@ function mpOnDisconnect(silent){
     // Se desconectó antes de empezar (en el lobby o eligiendo mazo)
     const lov=document.getElementById('mp-lobby-ov'); if(lov)lov.remove();
     const dov=document.getElementById('mp-deck-ov'); if(dov)dov.remove();
+    const mov=document.getElementById('mp-menu-ov'); if(mov)mov.remove();
+    const tov=document.getElementById('mp-trade-ov'); if(tov)tov.remove();
     showToastMsg('⚠ Tu rival se desconectó antes de empezar el duelo.');
     mpTeardown();
     showS('title-screen');
@@ -2831,7 +3240,137 @@ function mpLeaveDuel(){
   showS('title-screen');
   mpTeardown();
 }
+
+// ── INTERCAMBIO DE CARTAS ────────────────────────────────────
+let MPTRADE={active:false,theirColl:null,myOffer:null,theirWant:null,incoming:null,pending:null};
+function mpTradeCounts(coll){const m={};coll.forEach(id=>{m[id]=(m[id]||0)+1;});return m;}
+function mpOpenTrade(){
+  ['mp-menu-ov','mp-deck-ov'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
+  const resov=document.getElementById('resov'); if(resov)resov.classList.remove('active');
+  if(!MPTRADE.active){
+    MPTRADE={active:true,theirColl:null,myOffer:null,theirWant:null,incoming:null,pending:null};
+    mpSend({t:'trade_hello',coll:SAVE.coll});
+  }
+  let ov=document.getElementById('mp-trade-ov');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='mp-trade-ov';
+    ov.style.cssText='position:fixed;inset:0;z-index:480;background:rgba(0,0,5,.96);display:flex;flex-direction:column;align-items:center;padding:1rem;overflow:hidden;';
+    document.body.appendChild(ov);
+  }
+  mpRenderTrade();
+}
+function mpCloseTrade(){
+  const ov=document.getElementById('mp-trade-ov'); if(ov)ov.remove();
+  mpSend({t:'trade_bye'});
+  MPTRADE={active:false,theirColl:null,myOffer:null,theirWant:null,incoming:null,pending:null};
+  mpShowConnectedMenu();
+}
+function mpSelectMyOffer(cid){ MPTRADE.myOffer=(MPTRADE.myOffer===cid)?null:cid; mpRenderTrade(); }
+function mpSelectTheirWant(cid){ MPTRADE.theirWant=(MPTRADE.theirWant===cid)?null:cid; mpRenderTrade(); }
+function mpProposeTrade(){
+  if(!MPTRADE.myOffer||!MPTRADE.theirWant)return;
+  mpSend({t:'trade_offer',give:MPTRADE.myOffer,want:MPTRADE.theirWant});
+  MPTRADE.pending='sent';
+  mpRenderTrade();
+}
+function mpCancelProposal(){ MPTRADE.pending=null; mpSend({t:'trade_reject'}); mpRenderTrade(); }
+function mpAcceptTrade(){
+  const {give,want}=MPTRADE.incoming;
+  const idx=SAVE.coll.indexOf(want);
+  if(idx>-1) SAVE.coll.splice(idx,1);
+  SAVE.coll.push(give);
+  save();checkAvatarUnlocks();
+  mpSend({t:'trade_accept'});
+  const got=CARDS.find(c=>c.id===give);
+  MPTRADE.incoming=null;
+  showToastMsg('🔄 ¡Intercambio realizado! Recibiste '+(got?got.name:'una carta')+'.');
+  mpRenderTrade();
+}
+function mpRejectTrade(){
+  mpSend({t:'trade_reject'});
+  MPTRADE.incoming=null;
+  mpRenderTrade();
+}
+function mpTradeCardGrid(list, counts, selectedId, selFnName){
+  if(list.length===0) return '<div style="text-align:center;font-family:Philosopher,serif;font-size:.66rem;color:var(--td);padding:.8rem">No hay cartas disponibles.</div>';
+  return '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;max-height:26vh;overflow-y:auto;padding:.2rem">'
+    +list.map(cid=>{
+      const c=CARDS.find(x=>x.id===cid); if(!c)return'';
+      const sel=selectedId===cid;
+      const last=counts[cid]===1;
+      return '<div class="hc" style="width:100%;cursor:pointer;border:2px solid '+(sel?'#52b788':'rgba(255,255,255,.15)')+';position:relative;" onclick="'+selFnName+'(\''+cid+'\')">'
+        +cardFace(c)
+        +(last?'<div style="position:absolute;bottom:1px;left:1px;right:1px;background:rgba(232,93,4,.9);font-size:.4rem;text-align:center;border-radius:3px;color:#fff;font-family:Cinzel,serif;padding:1px 0;">única</div>':'')
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
+function mpRenderTrade(){
+  const ov=document.getElementById('mp-trade-ov'); if(!ov)return;
+  if(!MPTRADE.theirColl){
+    ov.innerHTML='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;">'
+      +'<div style="font-family:Cinzel,serif;font-size:.8rem;color:#e0aaff">🔄 Esperando la colección de tu rival…</div>'
+      +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="mpCloseTrade()">✕ Cancelar</button></div>';
+    return;
+  }
+  const pow=cid=>{const c=CARDS.find(x=>x.id===cid);return c?c.st*100+c.stats.reduce((a,b)=>a+b,0):0;};
+  const myCounts=mpTradeCounts(SAVE.coll);
+  const theirCounts=mpTradeCounts(MPTRADE.theirColl);
+  const myOfferable=Object.keys(myCounts).filter(cid=>myCounts[cid]>=2&&CARDS.find(c=>c.id===cid)).sort((a,b)=>pow(a)-pow(b));
+  const theirList=Object.keys(theirCounts).filter(cid=>CARDS.find(c=>c.id===cid)).sort((a,b)=>pow(a)-pow(b));
+
+  let html='<div style="width:100%;max-width:440px;height:100%;display:flex;flex-direction:column;overflow-y:auto;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">'
+    +'<button class="btn xs" style="border-color:var(--td);color:var(--td)" onclick="mpCloseTrade()">← Volver</button>'
+    +'<div style="font-family:\'Cinzel Decorative\',serif;font-size:.82rem;color:#e0aaff;text-align:center;flex:1">🔄 Intercambio</div>'
+    +'<div style="width:64px"></div></div>';
+
+  if(MPTRADE.incoming){
+    const giveCard=CARDS.find(c=>c.id===MPTRADE.incoming.give);
+    const wantCard=CARDS.find(c=>c.id===MPTRADE.incoming.want);
+    const losingLast=myCounts[wantCard.id]===1;
+    html+='<div style="background:rgba(224,170,255,.08);border:1.5px solid rgba(224,170,255,.4);border-radius:10px;padding:.7rem;margin-bottom:.6rem;text-align:center;">'
+      +'<div style="font-family:Cinzel,serif;font-size:.72rem;color:#e0aaff;margin-bottom:.5rem">Tu rival te propone un intercambio:</div>'
+      +'<div style="display:flex;align-items:center;justify-content:center;gap:.7rem;margin-bottom:.5rem">'
+      +'<div style="width:80px"><div style="font-size:.58rem;color:var(--td);margin-bottom:.2rem">Recibís</div><div class="hc" style="width:80px;border-color:#52b788">'+cardFace(giveCard)+'</div></div>'
+      +'<div style="font-size:1.2rem;color:var(--td)">⇄</div>'
+      +'<div style="width:80px"><div style="font-size:.58rem;color:var(--td);margin-bottom:.2rem">Entregás</div><div class="hc" style="width:80px;border-color:#e85d04">'+cardFace(wantCard)+'</div></div>'
+      +'</div>'
+      +(losingLast?'<div style="font-size:.62rem;color:#ff8a8a;margin-bottom:.5rem">⚠ Es tu única copia de '+wantCard.name+'.</div>':'')
+      +'<div style="display:flex;gap:.5rem;justify-content:center">'
+      +'<button class="btn xs" style="border-color:#52b788;color:#52b788" onclick="mpAcceptTrade()">✓ Aceptar</button>'
+      +'<button class="btn xs" style="border-color:#e85d04;color:#e85d04" onclick="mpRejectTrade()">✕ Rechazar</button>'
+      +'</div></div>';
+  }
+
+  if(MPTRADE.pending==='sent'){
+    const giveCard=CARDS.find(c=>c.id===MPTRADE.myOffer);
+    const wantCard=CARDS.find(c=>c.id===MPTRADE.theirWant);
+    html+='<div style="background:rgba(127,216,255,.08);border:1.5px solid rgba(127,216,255,.35);border-radius:10px;padding:.6rem;margin-bottom:.6rem;text-align:center;">'
+      +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:#7fd8ff">⏳ Esperando que tu rival responda tu propuesta…</div>'
+      +'<div style="font-size:.6rem;color:var(--td);margin-top:.2rem">Ofrecés '+(giveCard?giveCard.name:'')+' · Pedís '+(wantCard?wantCard.name:'')+'</div>'
+      +'<button class="btn xs" style="margin-top:.4rem;border-color:var(--td);color:var(--td)" onclick="mpCancelProposal()">Cancelar propuesta</button>'
+      +'</div>';
+  }else{
+    html+='<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--pc);margin:.3rem 0 .2rem;text-align:center">Tu carta a ofrecer <span style="color:var(--td);font-family:Philosopher,serif;font-size:.6rem">(no se puede tu última copia)</span></div>'
+      +mpTradeCardGrid(myOfferable,myCounts,MPTRADE.myOffer,'mpSelectMyOffer')
+      +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--ec);margin:.5rem 0 .2rem;text-align:center">Carta que querés de tu rival</div>'
+      +mpTradeCardGrid(theirList,theirCounts,MPTRADE.theirWant,'mpSelectTheirWant')
+      +'<button class="btn sm" style="margin-top:.6rem;border-color:#e0aaff;color:#e0aaff" '+((MPTRADE.myOffer&&MPTRADE.theirWant)?'':'disabled')+' onclick="mpProposeTrade()">🔄 Proponer intercambio</button>';
+  }
+  html+='</div>';
+  ov.innerHTML=html;
+}
+
+function mpRematch(){
+  document.getElementById('resov').classList.remove('active');
+  MP.myDeck=null; MP.oppDeck=null; MP.deckSent=false; MP.oppReady=false;
+  mpOpenDeckPicker();
+  mpSend({t:'rematch'});
+}
 function mpBackToTitle(){
+  mpSend({t:'bye'}); // avisarle al rival que la sesión terminó, antes de cortar
   document.getElementById('resov').classList.remove('active');
   showS('title-screen');
   mpTeardown();
