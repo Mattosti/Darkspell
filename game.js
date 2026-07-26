@@ -24,13 +24,10 @@ document.addEventListener('DOMContentLoaded',()=>applyUIIcons());
 document.getElementById('logoMainImg').src = LOGO_MAIN;
 document.getElementById('logoSubImg').src  = LOGO_SUB;
 
-const FC   = {void:'#9d4edd',fire:'#e85d04',nat:'#52b788',storm:'#4895ef',neutral:'#8a8f98'};
+const FC   = {void:'#9d4edd',fire:'#e85d04',nat:'#52b788',storm:'#4895ef'};
+const NEUTRAL_COLOR = '#9aa0a6'; // gris: cartas inmunes al terreno (neutral:true)
 const ELEM_ICON = {void:'🌀',fire:'🔥',nat:'🍃',storm:'⚡'};
 const ELEM_ICON_KEY = {void:'icon_void',fire:'icon_fire',nat:'icon_nature',storm:'icon_storm'};
-// Elemento a MOSTRAR para una carta: las cartas neutrales conservan su 'f'
-// original (para lógica interna, ej. mazos de duelistas por facción) pero
-// visualmente se representan con el sigilo gris "neutral" en vez del suyo.
-function dispEl(c){ return c.neutral ? 'neutral' : c.f; }
 function elemIcon(el, size){
   const key = ELEM_ICON_KEY[el];
   if(!key || typeof UI_ICON === 'undefined' || !UI_ICON[key]) return ELEM_ICON[el]||''; // respaldo si algo falla
@@ -39,7 +36,7 @@ function elemIcon(el, size){
     : 'width:94%;height:94%;object-fit:contain'; // sin size: llena el círculo contenedor (insignias)
   return '<img class="ui-ic" data-ic="'+key+'" src="'+UI_ICON[key]+'" style="'+style+'">';
 }
-const ELEM_NAME = {void:'Vacío',fire:'Fuego',nat:'Naturaleza',storm:'Tormenta',neutral:'Neutral'};
+const ELEM_NAME = {void:'Vacío',fire:'Fuego',nat:'Naturaleza',storm:'Tormenta'};
 const ELEMENTS_LIST = ['fire','storm','nat','void'];
 function fmtN(v){ return v>=10 ? 'A' : String(v); }
 
@@ -47,7 +44,7 @@ function fmtN(v){ return v>=10 ? 'A' : String(v); }
 // Versión del juego: subir este número en cada actualización importante.
 // Se muestra en el título y en el lobby online, para que dos jugadores
 // puedan confirmar rápido que están en la misma versión antes de jugar.
-const GAME_VERSION = '4';
+const GAME_VERSION = '5';
 document.addEventListener('DOMContentLoaded',()=>{
   const v=document.getElementById('gameVersion'); if(v) v.textContent=GAME_VERSION;
 });
@@ -273,32 +270,41 @@ const CINE_DATA=[
   {img:'c0',title:'Rumores de un Nuevo Héroe',
    text:'Las noticias viajan rápido por los caminos. En las tabernas se habla de un viajero que venció a los duelistas de las Tierras del Comienzo sin perder una sola carta importante. Tras las murallas del Castillo del Mercader, alguien escucha con atención... y sonríe.'},
   {img:'c1',title:'El Eco de la Tormenta',
-   text:'El Castillo del Mercader cae en silencio. Hacia el norte, nubes cargadas de rayos se acumulan sobre la Fortaleza, como si la tormenta misma supiera lo que se aproxima. Los soldados de Lord Grevik afilan sus espadas, pero algunos ya empiezan a dudar de su lealtad.'},
+   text:'El Castillo del Mercader cae en silencio, no hay burlas, no hay gritos de victoria. Hacia el norte, nubes cargadas de rayos se acumulan sobre la Fortaleza, como si la tormenta misma supiera lo que se aproxima.'},
   {img:'c2',title:'La Ciudadela Despierta',
-   text:'En lo más profundo de la Ciudadela Oscura, algo enorme abre los ojos por primera vez en siglos. Lord Malachar siente la perturbación en el tejido del Vacío: alguien se acerca al trono. Ordena que las puertas malditas permanezcan abiertas. "Que venga," susurra. "Quiero ver de qué está hecho."'},
+   text:'En lo más profundo de la Ciudadela Oscura, los sellos que contenían una magia antigua y oscura comienzan a romperse. Los castillos anteriores, al caer, no solo desintegraban hierro, piedra y escombros: su función era sellar un antiguo poder oculto. Un poder que solo el senescal tirano de Aetherion guardaba para sí mismo. Lord Malachar siente la perturbación en el tejido del Vacío: alguien se acerca al trono. Sin embargo, ordena que las puertas malditas permanezcan abiertas. "Que venga," susurra.'},
   {img:'c3',title:'El Trono Vacío',
-   text:'El Darkspell se apaga en las manos de Malachar y su corona rueda por las escaleras del trono. El reino, libre del Destructor Eterno, respira por primera vez en generaciones. Pero en las cartas que aún brillan con magia oscura, una pregunta queda flotando: ¿qué despertó realmente al abrir ese trono?'},
+   text:'La magia se desvanece de las manos de Malachar y su corona rueda por las escaleras del trono. El reino, libre del Destructor Eterno, respira por primera vez en generaciones. Pero en las cartas que aún brillan con magia oscura, una pregunta queda flotando: ¿qué despertó realmente al abrir ese trono? Malachar era otro sirviente, un administrador de un poder aún más impredecible y destructivo. ¿Eliminarlo fue nuestra salvación o nuestra condena? De las profundidades de la ciudadela emerge un portal, y de él comienza a brotar una magia tan oscura, perturbadora y enorme que impregna todo a su alrededor. Aetherion no conocerá la paz si el verdadero mal no es exterminado.'},
 ];
 
 
 // Escenas del Vacío Eterno y El Reino Invertido: reutilizan arte de cartas
 // ya existente (sin ilustraciones dedicadas) para no sumar peso al juego.
-CINE_DATA[4]={art:'sombra_vacio',title:'El Reflejo que Observa',
-  text:'El velo tras Malachar se abre en un espacio que no debería existir. Sid observa cada movimiento del viajero desde un espejo que nunca refleja lo mismo dos veces. "Otro que cree que esto es un final," susurra. "Aquí, todo empieza de nuevo, y peor."'};
+CINE_DATA[4]={art:'sombra_vacio',title:'El Vacío que Observa',
+  text:'El velo tras el Rey Invertido se abre en un espacio que no debería existir. Nuevamente el tejido de la realidad se quiebra y una invitación hacia un futuro más oscuro y peligroso se hace presente. "Esto no es el final," susurra el viento.'};
 CINE_DATA[5]={art:'art_stormbringer',title:'El Cielo se Rompe',
-  text:'El Espejo Roto queda atrás, pero el cielo del Vacío jamás estuvo entero. Kael Tormenta convoca vientos que no obedecen ninguna dirección conocida, y la Dríada Corrupta observa desde raíces que crecen hacia arriba, buscando un sol que no existe en este lado del velo.'};
+  text:'La experiencia en duelos mejora, las cartas también. ¿Por qué no volver? ¿Qué sentido tiene ya esto? El camino trajo pocos aliados, enemigos sobran. Todo está en juego: detenerse, volver, condenaría a todos los mundos a un destino como el del Reino Invertido. Aetherion está a merced de esa misma suerte. Kael Tormenta convoca vientos que no obedecen ninguna dirección conocida, y la Dríada Corrupta observa desde raíces que crecen hacia arriba, buscando un sol que no existe en este lado del velo. La oscuridad es casi total.'};
 CINE_DATA[6]={art:'kraken',title:'Las Aguas que No Reflejan',
-  text:'Bajo Cielos Partidos se extiende un mar sin luna ni estrellas: el Mar Negro. Almirante Nox navega una flota hundida hace siglos, y Pyros el Inmortal arde bajo el agua sin apagarse nunca. Algo enorme se mueve en las profundidades, esperando su turno.'};
+  text:'Bajo Cielos Partidos se extiende un mar sin luna ni estrellas: el Mar Negro del Vacío. Almirante Nox navega una flota hundida hace siglos, y Pyros el Inmortal arde bajo el agua sin apagarse nunca. Algo enorme se mueve en las profundidades, esperando su turno. En estos reinos el orden lo da el más fuerte. Hoy puede ser cazador, mañana presa.'};
 CINE_DATA[7]={art:'apocbeast',title:'Donde Todo Comenzó',
-  text:'El Mar Negro desemboca en un solo punto: El Origen. Aquí no hay más territorio del Vacío que cruzar — solo El Archivista, guardián de cada secreto, y detrás de él, la entidad que le da nombre a este lugar. Vencerla podría abrir algo que el reino no está listo para ver.'};
-CINE_DATA[10]={art:'devorador_rec',title:'El Reflejo Cobra Forma',
-  text:'Del otro lado del reflejo, Aetherion existe torcido: un reino que ganó todas las guerras que el original perdió. Inquisidora Ren juzga con fuego a quien no jura lealtad al trono invertido, y el Nigromante Vael archiva cada nombre que cruza el umbral. El tuyo, ya lo anotó.'};
-CINE_DATA[11]={art:'custodio_tumbas',title:'La Fortaleza que Nunca Cayó',
-  text:'Ecos de Cristal se astilla detrás. El Bastión Quebrado se sostiene con hilos de energía violeta donde debería haber piedra. Almirante Rhess comanda una flota que naufragó hace un siglo y sigue dando órdenes, y la Guardiana Sel custodia raíces de un bosque que ya no existe en ningún mapa.'};
-CINE_DATA[12]={art:'verdugo_ciego',title:'El Ocaso que No Termina',
-  text:'El sol de este reino se puso hace mucho y decidió quedarse así. En la Vigía del Ocaso, la Campeona Ixara gana combates que ya ganó mil veces antes, y el Verdugo Nyx ejecuta sentencias sin rostro propio. Cada victoria aquí se siente, extrañamente, como un eco.'};
+  text:'El Mar del Vacío desemboca en un solo punto: El Origen. Aquí no hay más territorio del Vacío que cruzar — solo El Archivista, guardián de cada secreto, y detrás de él, la entidad que le da nombre a este lugar. Vencerla podría abrir algo que el reino no está listo para ver.'};
+CINE_DATA[10]={art:'devorador_rec',title:'La Realidad se Invierte',
+  text:'Del otro lado del portal aparece una versión de Aetherion torcida: un reino producto del poder inconmensurable de esta magia oscura, como nunca se ha visto. Un reflejo corrupto de su contraparte. Las invocaciones de las cartas apenas pueden resistir. Sin embargo, ningún reino, por más desquiciado que parezca, escapa a un orden. La Inquisidora Ren juzga con fuego a quien no jura lealtad al trono invertido, y el Nigromante Vael archiva cada nombre que cruza el umbral. El tuyo, ya lo anotó.'};
+CINE_DATA[11]={art:'custodio_tumbas',title:'La Fortaleza Fracturada',
+  text:'Ecos de Cristal se astilla detrás. El Bastión Quebrado se sostiene con hilos de energía violeta donde debería haber piedra. El Almirante Rhess comanda una flota que naufragó hace un siglo y sigue dando órdenes a sus súbditos inmortales, y la Guardiana Sel, presa de la locura, custodia raíces de un bosque que ya no existe en ningún mapa.'};
+CINE_DATA[12]={art:'verdugo_ciego',title:'El Ocaso Eterno',
+  text:'El sol de este reino no brilla, no da calor, no hace crecer las cosechas. Es un sol oscuro, pálido, que se alimenta de los seres de este mundo. Un depredador gigante: silencioso, lento, pero eficaz. En la Vigía del Ocaso, la Campeona Ixara gana combates que ya ganó mil veces antes, obligada a repetirlos una y otra vez como castigo por desafiar lo incomprensible, y el Verdugo Nyx ejecuta sentencias sin rostro propio. Cada juez y ejecutor en este mundo fue, alguna vez, uno de los duelistas más destacados de Aetherion — vencidos en batalla por el ya muerto Senescal Malachar, que cerró el portal detrás de ellos, dejándolos aquí para siempre. Sus mentes, poco a poco, fueron corrompidas y moldeadas para proteger la misma fuente de la magia oscura. Cada victoria aquí se siente, extrañamente, como un eco vacío.'};
 CINE_DATA[13]={art:'archimagister_vacio',title:'El Trono que Pudo Ser',
-  text:'Solo queda el Trono Invertido. La Corsaria Vael vuela entre nubes que no deberían sostener nada, guardiana de las últimas puertas. Y detrás de ellas, sentado en un reflejo perfecto del poder que Aetherion nunca dejó caer en malas manos, espera El Rey Invertido.'};
+  text:'Solo queda el Trono Invertido. La Corsaria Vael vuela entre nubes que no deberían sostener nada, guardiana de las últimas puertas. Protege con vehemencia a quien guarda la llave para entrar y salir de este mundo. Detrás de esas puertas imperturbables, sentado en un trono de irrealidades, locura, muerte y destrucción, espera El Rey Invertido.'};
+
+// Cinemáticas del Mundo 4 (El Abismo Sin Nombre): no hay castillos que
+// conquistar, así que estas dos no se disparan por región (reg) sino
+// directamente al vencer al jefe final. Ver showFinaleCine()/CINE_EPILOGUE.
+CINE_DATA[9]={art:'titancosmico',title:'El Freno del Vacío',
+  text:'El vacío, la nada, la oscuridad... aún tiene sus reglas. Has medido tu poder contra el vacío, has roto su fuerza. Algo impensado durante eones: un freno fue puesto. Sin embargo, esto está lejos de terminar. El vacío siempre reclama lo que cree que le pertenece. Por eso, ahora tienes la habilidad de caminar entre mundos, fortalecer tu poder y estar siempre preparado para lo que vendrá. Características únicas del Duelista Supremo.'};
+const CINE_EPILOGUE={port:'tomas',title:'Otro Viaje Comienza',
+  text:'Vuelves a donde todo comenzó, pero como alguien nuevo, diferente. El pueblo de Aetherion, ahora en paz, te reconoce como su protector. Tus hazañas han inspirado a otros a conseguir y competir con sus cartas mágicas. Observas el cielo celeste, con el sol brillante. Tomas tu mochila y emprendes un nuevo viaje para descubrir los secretos más profundos de los duelistas de Darkspell. Otro viaje comienza...'};
+let CINE_CHAIN=null; // null | 'epilogue' | 'title' — ver showCinematic()
 
 // ── SAVE (autoguardado) ───────────────────────────────────────
 const INITIAL_COLL=['rata_pantano','esqueleto','lanzero','chispa','escudero_llama','jinete_trueno']; // 6 de inicio: cuatro ★1 + dos ★2 para tener chance temprana
@@ -842,7 +848,9 @@ function cardFace(c, stats, elBonus){
     + '<img class="cv-frame'+(isLeg?' legendary':'')+'" src="'+(isLeg?CARD_FRAME_LEG:CARD_FRAME)+'" alt="">'
     + '<div class="cv-banner">'+c.name+'</div>'
     + '<div class="cv-stars">'+starHTML+'</div>'
-    + '<div class="cv-elem'+(boost?' elem-boost':'')+'" style="background:'+FC[dispEl(c)]+';border-color:'+FC[dispEl(c)]+';color:'+FC[dispEl(c)]+'">'+elemIcon(dispEl(c))+'</div>'
+    + (c.neutral
+        ? '<div class="cv-elem cv-elem-neutral'+(boost?' elem-boost':'')+'" style="background:'+NEUTRAL_COLOR+';border-color:'+NEUTRAL_COLOR+'" title="Neutral: inmune al terreno"></div>'
+        : '<div class="cv-elem'+(boost?' elem-boost':'')+'" style="background:'+FC[c.f]+';border-color:'+FC[c.f]+';color:'+FC[c.f]+'">'+elemIcon(c.f)+'</div>')
     + '<div class="cv-top'+(sc?' '+sc:'')+'">'+fmtN(s[0])+'</div>'
     + '<div class="cv-right'+(sc?' '+sc:'')+'">'+fmtN(s[1])+'</div>'
     + '<div class="cv-bottom'+(sc?' '+sc:'')+'">'+fmtN(s[2])+'</div>'
@@ -852,7 +860,8 @@ function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.ran
 
 // ── ELEMENT LEGEND ────────────────────────────────────────────
 function legendHTML(){
-  return ELEMENTS_LIST.map(e=>'<span class="lg"><span class="lgicon" style="background:'+FC[e]+'aa;border-color:'+FC[e]+'">'+elemIcon(e)+'</span> '+ELEM_NAME[e]+'</span>').join('');
+  return ELEMENTS_LIST.map(e=>'<span class="lg"><span class="lgicon" style="background:'+FC[e]+'aa;border-color:'+FC[e]+'">'+elemIcon(e)+'</span> '+ELEM_NAME[e]+'</span>').join('')
+    + '<span class="lg"><span class="lgicon" style="background:'+NEUTRAL_COLOR+'aa;border-color:'+NEUTRAL_COLOR+'"></span> Neutral (inmune al terreno)</span>';
 }
 
 // ── SCREENS ───────────────────────────────────────────────────
@@ -1756,7 +1765,7 @@ function showBoosterReveal(cards){
       if(this.dataset.flipped==='1')return;
       this.dataset.flipped='1';
       this.innerHTML=cardFace(c);
-      if(c.st>=4){ this.style.boxShadow='0 0 18px '+(FC[dispEl(c)]||'#e0aaff'); }
+      if(c.st>=4){ this.style.boxShadow='0 0 18px '+(FC[c.f]||'#e0aaff'); }
     };
     setTimeout(()=>back.click(), 400+i*350); // se revelan solas, en cadena
     wrap.appendChild(back);
@@ -2059,14 +2068,25 @@ function continueNext(){
   if(!next||next.reg!==d.reg) return showS('map-screen'); // region change goes to map
   openDk(next.id);
 }
-function showCinematic(regionIdx){
-  const c=CINE_DATA[regionIdx];if(!c)return;showS('cinematic-screen');
-  document.getElementById('cineImg').src=c.art?ART[c.art]:CINE_IMG[c.img];
+function showCinematic(key){
+  const isEpilogue=key==='epilogue';
+  const c=isEpilogue?CINE_EPILOGUE:CINE_DATA[key];
+  if(!c)return;
+  showS('cinematic-screen');
+  document.getElementById('cineImg').src=c.art?ART[c.art]:(c.port?PORT[c.port]:CINE_IMG[c.img]);
   document.getElementById('cineTitle').textContent=c.title;
   document.getElementById('cineText').textContent=c.text;
-  if(!SAVE.cineSeen.includes(regionIdx)){SAVE.cineSeen.push(regionIdx);save();}
+  if(!isEpilogue&&!SAVE.cineSeen.includes(key)){SAVE.cineSeen.push(key);save();}
+  // Cadena especial del final del juego: al vencer al jefe final (reg 9) se
+  // muestra esta cinemática y, al continuar, el epílogo; al continuar el
+  // epílogo, se vuelve a la pantalla de título en vez del mapa.
+  CINE_CHAIN=(key===9)?'epilogue':(isEpilogue?'title':null);
 }
-function closeCinematic(){showS('map-screen');}
+function closeCinematic(){
+  if(CINE_CHAIN==='epilogue'){CINE_CHAIN=null;showCinematic('epilogue');return;}
+  if(CINE_CHAIN==='title'){CINE_CHAIN=null;showS('title-screen');return;}
+  showS('map-screen');
+}
 
 // ── RENDER ────────────────────────────────────────────────────
 function render(){renderBoard();renderPH();renderEH();renderScore();renderTurn();}
@@ -2179,7 +2199,7 @@ function duelZoom(ci,hi){
     stats=null;
     ownerTag=(G.sel===hi)?'<span style="color:var(--gold)">✦ Seleccionada para jugar</span>':'';
   }
-  const fc=FC[dispEl(c)]||'var(--gold)';
+  const fc=FC[c.f]||'var(--gold)';
   const ov=document.createElement('div');
   ov.id='duel-zoom-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:460;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:1.5rem;';
@@ -2781,7 +2801,9 @@ function addLog(msg,cls){const l=document.getElementById('log');const d=document
 
 // ── TOOLTIP ───────────────────────────────────────────────────
 const ttEl=document.getElementById('tt');
-function tip(e,c){document.getElementById('ttn').textContent=c.name;document.getElementById('ttf').innerHTML='<span style="color:'+FC[dispEl(c)]+'">'+elemIcon(dispEl(c),34)+' '+ELEM_NAME[dispEl(c)].toUpperCase()+' · '+c.st+'★</span>';const s=c.stats;document.getElementById('tts').innerHTML='<span>↑'+fmtN(s[0])+'</span><span>→'+fmtN(s[1])+'</span><span>↓'+fmtN(s[2])+'</span><span>←'+fmtN(s[3])+'</span>';document.getElementById('ttl').textContent=c.lore;ttEl.classList.add('show');tipMv(e);}
+function tip(e,c){document.getElementById('ttn').textContent=c.name;document.getElementById('ttf').innerHTML=c.neutral
+  ? '<span style="color:'+NEUTRAL_COLOR+'">● NEUTRAL · '+c.st+'★</span>'
+  : '<span style="color:'+FC[c.f]+'">'+elemIcon(c.f,34)+' '+ELEM_NAME[c.f].toUpperCase()+' · '+c.st+'★</span>';const s=c.stats;document.getElementById('tts').innerHTML='<span>↑'+fmtN(s[0])+'</span><span>→'+fmtN(s[1])+'</span><span>↓'+fmtN(s[2])+'</span><span>←'+fmtN(s[3])+'</span>';document.getElementById('ttl').textContent=c.lore;ttEl.classList.add('show');tipMv(e);}
 function tipOff(){ttEl.classList.remove('show');}
 function tipMv(e){
   if(window.matchMedia('(pointer:coarse)').matches){ttEl.classList.remove('show');return;}
